@@ -7,15 +7,29 @@ export default function EntryGate({ entry, accent, onEnter }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [checking, setChecking] = useState(false);
+  const [failures, setFailures] = useState(0);
+  const [lockedUntil, setLockedUntil] = useState(0);
   const mode = entry?.mode === 'password' && entry.passwordHash && entry.passwordSalt ? 'password' : entry?.mode === 'anywhere' ? 'anywhere' : 'button';
   const title = entry?.title || 'click to enter';
 
   const checkPassword = async (event) => {
     event.preventDefault();
+    if (Date.now() < lockedUntil) {
+      setError('Too many attempts. Please wait a few seconds and try again.');
+      return;
+    }
     setChecking(true);
     try {
-      if (await verifyEntryPassword(password, entry)) onEnter();
-      else { setError('That password is incorrect.'); setPassword(''); }
+      if (await verifyEntryPassword(password, entry)) {
+        setFailures(0);
+        onEnter();
+      } else {
+        const nextFailures = failures + 1;
+        setFailures(nextFailures);
+        if (nextFailures >= 5) setLockedUntil(Date.now() + 10_000);
+        setError('That password is incorrect.');
+        setPassword('');
+      }
     } catch { setError('Could not check that password. Try again.'); }
     finally { setChecking(false); }
   };

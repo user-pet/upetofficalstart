@@ -5,6 +5,13 @@ import { browserOf, countryOf, deviceOf, featureOf, referrerOf, routeOf } from '
 const dateKey = (at) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(at);
 const safeRoute = (value) => routeOf(value);
 const ignoredRoute = (route) => /^\/deployment-check(?:[-/]|$)/.test(route);
+const STATIC_ROUTES = new Set(['/', '/explore', '/login', '/claim', '/privacy', '/legal', '/terms', '/support', '/status', '/changelog', '/help']);
+const aggregateRouteKey = (route) => (
+  STATIC_ROUTES.has(route) || route.startsWith('/dashboard') || route.startsWith('/help/') || route.startsWith('/staff/')
+    ? route
+    : '/:profile'
+);
+const safeMapFieldKey = (key) => String(key || 'Unknown').replace(/[.$/[\]#~*]/g, '_').slice(0, 64) || 'Unknown';
 
 // Stores daily aggregates only. Raw IP addresses, user agents,
 // account identifiers, cookies, and individual visit records are never stored.
@@ -20,12 +27,14 @@ export async function recordAggregate(request, body) {
   const increment = () => FieldValue.increment(1);
   const next = { day, updatedAt: now(), expiresAt: expiry(90 * 86400000) };
   if (type === 'page') {
+    const pageKey = safeMapFieldKey(aggregateRouteKey(route));
+    const refKey = safeMapFieldKey(referrerOf(body.referrer));
     next.pageViews = increment();
-    next.pages = { [route]: increment() };
+    next.pages = { [pageKey]: increment() };
     next.countries = { [countryOf(request.headers)]: increment() };
     next.devices = { [deviceOf(request.headers)]: increment() };
     next.browsers = { [browserOf(request.headers)]: increment() };
-    next.referrers = { [referrerOf(body.referrer)]: increment() };
+    next.referrers = { [refKey]: increment() };
   }
   if (type === 'conversion') next.conversions = increment();
   if (type === 'feature') {

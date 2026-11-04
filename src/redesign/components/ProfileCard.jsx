@@ -358,7 +358,7 @@ export const ProfileScene = ({ p, className = "", children, scrollable = false, 
   const content = children || (slideshow ? <SlideshowPage p={p} /> : <ProfileCard p={p} />);
   const bg = p.media.background;
   return (
-    <div data-profile-scene className={`relative overflow-hidden ${className}`} style={{ background: p.card.bgColor }}>
+    <div data-profile-scene className={`upet-profile-scene relative overflow-hidden ${className}`} style={{ background: p.card.bgColor }}>
       {bg.src && <MediaLayer media={bg} className="absolute inset-[-20px] h-[calc(100%+40px)] w-[calc(100%+40px)]" style={{ backgroundSize: "cover" }} />}
       {!bg.src && <div className="absolute inset-0" style={{ background: `radial-gradient(60% 50% at 50% 10%, ${hexA(p.card.accent, 0.35)}, transparent 70%)` }} />}
       <BackgroundFx kind={p.effects.background} amount={p.effects.backgroundAmount} color={p.effects.backgroundColor} />

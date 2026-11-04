@@ -1,5 +1,5 @@
 import "@/App.css";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useLayoutEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "react-router-dom";
 import { Toaster } from "sonner";
 import { StoreProvider, useStore } from "./lib/store";
@@ -32,8 +32,22 @@ const dashboardImports = {
 
 const NAMES = { "": "Home", explore: "Explore", legal: "Legal", login: "Login", privacy: "Privacy", terms: "Terms", support: "Support", status: "Status", changelog: "Changelog", 'business-verification': 'Business verification' };
 
+function resetWindowScroll() {
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
+
 const TitleSync = () => {
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
+  useLayoutEffect(() => {
+    if (!hash) {
+      resetWindowScroll();
+      const id = window.requestAnimationFrame(resetWindowScroll);
+      return () => window.cancelAnimationFrame(id);
+    }
+    return undefined;
+  }, [pathname, search, hash]);
   useEffect(() => {
     const [first = "", second] = pathname.split("/").filter(Boolean);
     const cap = (w) => w[0].toUpperCase() + w.slice(1);
@@ -73,13 +87,19 @@ const RetiredProfilePage = () => {
   return <Navigate to={`/${encodeURIComponent(username)}`} replace />;
 };
 
-const Shell = ({ children }) => (
-  <>
-    <Header />
-    <main className="min-h-screen pt-36">{children}</main>
-    <Footer />
-  </>
-);
+const Shell = ({ children }) => {
+  const { pathname, search, hash } = useLocation();
+  useLayoutEffect(() => {
+    if (!hash) resetWindowScroll();
+  }, [pathname, search, hash]);
+  return (
+    <>
+      <Header />
+      <main className="min-h-screen pt-36">{children}</main>
+      <Footer />
+    </>
+  );
+};
 
 const Guard = ({ children }) => {
   const { user, ready, needsClaim } = useStore();

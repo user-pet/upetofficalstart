@@ -1,10 +1,20 @@
 // Local-only UI smoke test. Firebase and HTTP APIs are mocked: no user data is accessed.
 import assert from 'node:assert/strict';
+import os from 'node:os';
+import path from 'node:path';
 import { chromium } from 'playwright';
 
 const origin = process.env.UPET_PREVIEW_URL || 'http://127.0.0.1:5174';
 assert.ok(['localhost', '127.0.0.1', '[::1]'].includes(new URL(origin).hostname), 'Use a localhost Vite dev server, not production.');
-const browser = await chromium.launch({ headless: true });
+let browser;
+for (const options of [{ headless: true }, { headless: true, channel: 'msedge' }, { headless: true, channel: 'chrome' }]) {
+  try {
+    browser = await chromium.launch(options);
+    break;
+  } catch {}
+}
+assert.ok(browser, 'No Playwright Chromium, Microsoft Edge, or Google Chrome browser found.');
+const shot = (name) => path.join(os.tmpdir(), name);
 const mockStore = `
 import React from '/node_modules/.vite/deps/react.js';
 import { defaultProfile } from '/src/redesign/lib/profileModel.js';
@@ -59,7 +69,7 @@ try {
     // Render offscreen content for the screenshot only; production keeps its containment optimization.
     await page.addStyleTag({ content: 'section { content-visibility: visible !important; }' });
     await page.evaluate(() => scrollTo(0, 0));
-    await page.screenshot({ path: `/tmp/upet-main-site-${width}.png`, fullPage: true });
+    await page.screenshot({ path: shot(`upet-main-site-${width}.png`), fullPage: true });
   }
   await page.getByTestId('theme-toggle').click();
   assert.equal(await page.locator('html').evaluate((node) => node.classList.contains('dark')), false, 'Theme control should switch to light');
@@ -68,9 +78,22 @@ try {
   assert.equal(await page.locator('html').evaluate((node) => node.classList.contains('dark')), false, 'The new light choice should persist');
   await page.getByTestId('theme-toggle').click();
   assert.equal(await page.locator('html').evaluate((node) => node.classList.contains('dark')), true);
+  await page.goto(`${origin}/`);
+  await page.getByTestId('hero-title').waitFor();
+  await page.locator('[data-testid="site-footer"]').scrollIntoViewIfNeeded();
+  assert.ok(await page.evaluate(() => window.scrollY) > 100, 'Should scroll down to footer on homepage');
+  await page.getByTestId('footer-link-support').click();
+  await page.getByTestId('coming-soon-support').waitFor();
+  assert.equal(await page.evaluate(() => window.scrollY), 0, 'Route navigation from footer should jump scroll position back to top');
   await page.goto(`${origin}/marketplace`);
   await page.getByTestId('explore-page').waitFor();
   assert.equal(new URL(page.url()).pathname, '/explore');
+  await page.getByTestId('explore-filter-verified').click();
+  await page.getByTestId('explore-filter-popular').click();
+  await page.goto(`${origin}/status`);
+  await page.getByTestId('coming-soon-status').waitFor();
+  await page.goto(`${origin}/changelog`);
+  await page.getByTestId('coming-soon-changelog').waitFor();
   await page.goto(`${origin}/dashboard`);
   await page.waitForURL((url) => url.pathname === '/login' && url.searchParams.get('next') === '/dashboard', { waitUntil: 'domcontentloaded' });
   await page.getByTestId('header-login-button').waitFor();
@@ -80,7 +103,7 @@ try {
   await page.getByTestId('profile-entry-screen').click();
   await page.getByTestId('profile-entry-screen').waitFor({ state: 'hidden' });
   assert.equal(await page.getByRole('button', { name: /^Shop$/ }).count(), 0);
-  await page.screenshot({ path: '/tmp/upet-main-site-profile.png', fullPage: true });
+  await page.screenshot({ path: shot('upet-main-site-profile.png'), fullPage: true });
   await page.goto(`${origin}/help-preview`);
   await page.getByRole('search').waitFor();
   assert.equal(await page.getByRole('link', { name: 'Set up a shop', exact: true }).count(), 0);
@@ -93,6 +116,8 @@ try {
   await page.getByTestId('editor-page').waitFor();
   assert.equal(await page.getByTestId('sidebar-shop').count(), 0);
   await page.getByTestId('editor-tab-card').click();
+  await page.getByTestId('theme-preset-cyber').click();
+  await page.waitForFunction(() => window.__cleanupProfile.card.accent === '#a855f7');
   await page.getByTestId('card-display-name').fill('Edited locally');
   await page.waitForFunction(() => window.__cleanupProfile.displayName === 'Edited locally');
   await page.getByTestId('editor-tab-audio').click();
@@ -108,9 +133,18 @@ try {
   assert.equal(await page.evaluate(() => window.__cleanupProfile.audio.lyrics.lines[0].text), 'First line');
   await page.getByTestId('editor-tab-card').click();
   assert.equal(await page.getByTestId('card-display-name').inputValue(), 'Edited locally');
-  await page.screenshot({ path: '/tmp/upet-main-site-editor.png', fullPage: true });
+  await page.screenshot({ path: shot('upet-main-site-editor.png'), fullPage: true });
+
+  // Phone / Mobile Display Verification (360x800)
+  await page.setViewportSize({ width: 360, height: 800 });
+  assert.equal(await page.locator('body').evaluate((el) => el.scrollWidth <= innerWidth + 1), true, 'Mobile editor should not overflow horizontally at 360px');
+  await page.getByRole('button', { name: 'Open live preview' }).waitFor({ state: 'visible' });
+  await page.getByRole('button', { name: 'Open live preview' }).click();
+  await page.getByTestId('expanded-editor-preview').waitFor({ state: 'visible' });
+  await page.screenshot({ path: shot('upet-main-site-mobile-editor-360.png') });
+
   assert.deepEqual(errors, []);
-  console.log('PASS: desktop/mobile homepage, retired redirects, anonymous guard, public profile, Help Centre, login form routing, live profile edits, audio playback/pause and synced lyric import. No runtime exceptions. Firebase/APIs/auth persistence mocked.');
+  console.log('PASS: desktop/mobile homepage, retired redirects, anonymous guard, public profile, Help Centre, login form routing, live profile edits, mobile 360px dashboard/editor displays, audio playback/pause and synced lyric import. No runtime exceptions. Firebase/APIs/auth persistence mocked.');
 } finally {
   await browser.close();
 }

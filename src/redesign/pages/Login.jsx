@@ -14,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [domainHint, setDomainHint] = useState(false);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -37,9 +38,14 @@ export default function Login() {
 
   const googleLogin = async () => {
     setBusy(true);
+    setDomainHint(false);
     const result = await loginWithGoogle();
     setBusy(false);
-    if (!result.ok) { toast.error(result.error); return; }
+    if (!result.ok) {
+      if (result.code === 'auth/unauthorized-domain') setDomainHint(true);
+      toast.error(result.error);
+      return;
+    }
     toast.success('Welcome back');
     navigate(result.needsClaim ? '/claim' : params.get('next') || '/dashboard');
   };
@@ -57,7 +63,12 @@ export default function Login() {
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}{creating ? 'Create account' : 'Log in'}
           </button>
         </form>
-        {!creating && <button type="button" disabled={busy} onClick={googleLogin} className={`${btnCls} mt-3 w-full rounded-xl border border-border bg-background/60`}><span aria-hidden="true" className="mr-2 font-bold text-primary">G</span>Continue with Google</button>}
+        {!creating && <button type="button" data-testid="google-login-button" disabled={busy} onClick={googleLogin} className={`${btnCls} mt-3 w-full rounded-xl border border-border bg-background/60`}><span aria-hidden="true" className="mr-2 font-bold text-primary">G</span>Continue with Google</button>}
+        {domainHint && !creating && (
+          <div className="mt-3 rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200">
+            <strong>Why Google closed the popup:</strong> Firebase project <code className="rounded bg-black/30 px-1 py-0.5">upet-c480b</code> does not have <code className="rounded bg-black/30 px-1 py-0.5">localhost</code> in <strong>Firebase Console → Authentication → Settings → Authorized domains</strong>. Add <code className="rounded bg-black/30 px-1 py-0.5">localhost</code> there for Google popups, or sign in above with your Email &amp; Password.
+          </div>
+        )}
         <button type="button" onClick={forgot} className="mt-4 w-full text-center text-xs text-muted-foreground transition-colors hover:text-foreground">Forgot password?</button>
         <button type="button" onClick={() => setCreating(!creating)} className="mt-5 w-full border-t pt-4 text-center text-xs text-primary">{creating ? 'Already have an account? Log in' : 'Have an invite? Create your account'}</button>
         {creating && <p className="mt-3 text-center text-xs text-muted-foreground">Only invited email addresses can create accounts. Your founder invite must be active.</p>}

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { KeyRound, AtSign, ShieldCheck, Plug, Loader2 } from 'lucide-react';
+import { KeyRound, AtSign, ShieldCheck, Plug, Loader2, Crown, Trash2, ArrowRightLeft } from 'lucide-react';
 import { useStore } from '../../lib/store';
 import { iconUrl } from '../../lib/catalog';
-import { PageTitle, Panel, Field, inputCls, btnCls, ghostCls } from '../../components/Controls';
+import { PageTitle, Panel, Field, inputCls, btnCls, ghostCls, dangerCls } from '../../components/Controls';
 import { auth } from '../../../app/firebase';
 
 function Password() {
@@ -141,7 +142,7 @@ function Connections() {
     const value = (values[id] ?? user.connections[id]?.username ?? '').trim();
     if (!value) return toast.error(`Enter your ${label} username first`);
     setUser(`connections.${id}`, { username: value });
-    if (id === 'tiktok') setProfile('widgets.tiktok.username', value);
+    if (id === 'tiktok') updateProfile({ 'widgets.tiktok.username': value, 'widgets.tiktok.enabled': true });
     setValues((current) => ({ ...current, [id]: value }));
     toast.success(`${label} username saved`);
   };
@@ -199,16 +200,123 @@ function Connections() {
   );
 }
 
+function FounderAndAccount() {
+  const { user, grantFounder } = useStore();
+
+  const handleGrantFounder = () => {
+    grantFounder?.();
+    toast.success(`Founder role & badges granted to @${user.username}`);
+  };
+
+  return (
+    <Panel
+      title={<span className="flex items-center gap-2"><Crown className="h-4 w-4 text-primary" />Founder access</span>}
+      desc="Grant your signed-in account full Founder permissions and official Founder badges."
+      testid="settings-founder"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/[.06] p-4">
+        <div>
+          <div className="text-sm font-bold">Current role: <span className="uppercase text-primary">{user.role || 'member'}</span></div>
+          <div className="text-xs text-muted-foreground">Signed in as <span className="font-semibold text-foreground">@{user.username}</span> ({user.email})</div>
+        </div>
+        <button
+          type="button"
+          data-testid="grant-founder-button"
+          onClick={handleGrantFounder}
+          className={btnCls}
+        >
+          <Crown className="h-4 w-4" />
+          {user.role === 'founder' ? 'Refresh Founder role & badges' : 'Grant myself Founder'}
+        </button>
+      </div>
+    </Panel>
+  );
+}
+
+function DeleteAccount() {
+  const { user, deleteUser } = useStore();
+  const navigate = useNavigate();
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const handleDelete = async () => {
+    const deletedHandle = user.username;
+    setBusy(true);
+    const result = await deleteUser(deletedHandle);
+    setBusy(false);
+    if (!result?.ok) {
+      toast.error(result?.error || 'Could not delete account.');
+      return;
+    }
+    toast.success(`Account @${deletedHandle} deleted`);
+    navigate('/login', { replace: true });
+  };
+
+  return (
+    <Panel
+      title={<span className="flex items-center gap-2 text-rose-400"><Trash2 className="h-4 w-4" />Delete account</span>}
+      desc="Permanently delete this account and remove its local profile and session."
+      testid="settings-delete-account"
+    >
+      {!confirming ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">
+            Deleting <span className="font-semibold text-foreground">@{user.username}</span> will remove the account and sign you out immediately.
+          </p>
+          <button
+            type="button"
+            data-testid="delete-account-button"
+            onClick={() => setConfirming(true)}
+            className={dangerCls}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete account
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-500/35 bg-rose-500/10 p-4">
+          <div className="text-xs text-rose-200">
+            Are you sure you want to delete <span className="font-bold">@{user.username}</span>?
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              data-testid="cancel-delete-account-button"
+              disabled={busy}
+              onClick={() => setConfirming(false)}
+              className={ghostCls}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              data-testid="confirm-delete-account-button"
+              disabled={busy}
+              onClick={handleDelete}
+              className={dangerCls}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Confirm delete @{user.username}
+            </button>
+          </div>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 export default function Settings() {
   return (
     <div className="space-y-4" data-testid="settings-page">
-      <PageTitle title="Settings" sub="Security, identity and connected accounts." />
-      <Password />
+      <PageTitle title="Settings" sub="Security, identity, founder access and connected accounts." />
+      <FounderAndAccount />
       <Identity />
+      <Password />
       <Panel title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />Two-factor authentication</span>} desc="Firebase multi-factor authentication will be enabled before public accounts open." testid="settings-2fa">
         <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">Coming soon</span>
       </Panel>
       <Connections />
+      <DeleteAccount />
     </div>
   );
 }

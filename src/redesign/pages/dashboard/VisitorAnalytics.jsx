@@ -7,13 +7,72 @@ import { PageTitle } from '../../components/Controls';
 const COLORS = ['#6cc4ff', '#8b7cff', '#35d399', '#f7b955', '#ff6fae', '#59e3e3'];
 const number = new Intl.NumberFormat('en-GB');
 
+function buildLocalDevSummary(days) {
+  const daily = Array.from({ length: days }, (_, idx) => {
+    const d = new Date(Date.now() - (days - 1 - idx) * 86400000);
+    const iso = d.toISOString().slice(0, 10);
+    const wave = Math.round(140 + Math.sin(idx * 0.9) * 45 + (idx % 3) * 18);
+    return { name: iso, value: wave, featureClicks: Math.round(wave * 0.34) };
+  });
+  const pageViews = daily.reduce((sum, r) => sum + r.value, 0);
+  const featureClicks = daily.reduce((sum, r) => sum + r.featureClicks, 0);
+  return {
+    today: { pageViews: daily[daily.length - 1]?.value || 168 },
+    period: {
+      pageViews,
+      viewsChange: 18,
+      featureClicks,
+      clicksChange: 12,
+      averageDaily: Math.round(pageViews / Math.max(1, days)),
+      engagementRate: Math.round((featureClicks / Math.max(1, pageViews)) * 100),
+    },
+    daily,
+    countries: [
+      { name: 'US', value: Math.round(pageViews * 0.42) },
+      { name: 'GB', value: Math.round(pageViews * 0.19) },
+      { name: 'DE', value: Math.round(pageViews * 0.14) },
+      { name: 'CA', value: Math.round(pageViews * 0.11) },
+      { name: 'IL', value: Math.round(pageViews * 0.08) },
+      { name: 'FR', value: Math.round(pageViews * 0.06) },
+    ],
+    devices: [
+      { name: 'Mobile', value: Math.round(pageViews * 0.56) },
+      { name: 'Desktop', value: Math.round(pageViews * 0.39) },
+      { name: 'Tablet', value: Math.round(pageViews * 0.05) },
+    ],
+    features: [
+      { name: 'Audio play', value: Math.round(featureClicks * 0.38) },
+      { name: 'Social link click', value: Math.round(featureClicks * 0.31) },
+      { name: 'Discord copy', value: Math.round(featureClicks * 0.19) },
+      { name: 'Share profile', value: Math.round(featureClicks * 0.12) },
+    ],
+    browsers: [
+      { name: 'Chrome', value: Math.round(pageViews * 0.52) },
+      { name: 'Safari', value: Math.round(pageViews * 0.28) },
+      { name: 'Edge', value: Math.round(pageViews * 0.12) },
+      { name: 'Firefox', value: Math.round(pageViews * 0.08) },
+    ],
+    referrers: [
+      { name: 'Direct', value: Math.round(pageViews * 0.48) },
+      { name: 'discord.com', value: Math.round(pageViews * 0.29) },
+      { name: 'tiktok.com', value: Math.round(pageViews * 0.15) },
+      { name: 'x.com', value: Math.round(pageViews * 0.08) },
+    ],
+  };
+}
+
 async function loadSummary(days) {
-  const token = await auth?.currentUser?.getIdToken();
-  if (!token) throw new Error('Sign in again to view site statistics.');
-  const response = await fetch(`/api/visitor?days=${days}`, { headers: { authorization: `Bearer ${token}` }, cache: 'no-store' });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'Statistics could not be loaded.');
-  return result.summary;
+  try {
+    const token = await auth?.currentUser?.getIdToken();
+    if (!token) throw new Error('Sign in again to view site statistics.');
+    const response = await fetch(`/api/visitor?days=${days}`, { headers: { authorization: `Bearer ${token}` }, cache: 'no-store' });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Statistics could not be loaded.');
+    return result.summary;
+  } catch (err) {
+    if (import.meta.env?.DEV) return buildLocalDevSummary(days);
+    throw err;
+  }
 }
 
 const tooltipStyle = { background: '#0a111c', border: '1px solid rgba(108,196,255,.25)', borderRadius: 12, color: '#fff', fontSize: 12 };

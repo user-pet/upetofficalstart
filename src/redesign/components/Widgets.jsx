@@ -12,6 +12,12 @@ export { hexA };
 
 const shell = (w) => ({ background: hexA("#0a1422", w.alpha ?? 0.5), borderRadius: w.radius ?? 16, border: `1px solid ${hexA(w.accent || "#ffffff", 0.35)}` });
 
+const safeBannerCssUrl = (raw) => {
+  const s = String(raw || "").trim();
+  if (!s || !/^(https?:\/\/|\/)/i.test(s)) return "";
+  return s.replace(/["'()\\\r\n]/g, "");
+};
+
 export const DiscordWidget = ({ cfg }) => {
   const [copyStatus, setCopyStatus] = useState("");
   const handle = String(cfg.handle || "").replace(/^@/, "").trim();
@@ -19,7 +25,8 @@ export const DiscordWidget = ({ cfg }) => {
   const userId = /^\d{17,20}$/.test(String(cfg.userId || "")) ? String(cfg.userId) : "";
   const expanded = cfg.layout === "expanded";
   const badges = cfg.showBadges === false ? [] : discordBadgeLabels(cfg.publicFlags);
-  const showBanner = cfg.showBanner !== false && Boolean(cfg.banner);
+  const bannerUrl = safeBannerCssUrl(cfg.banner);
+  const showBanner = cfg.showBanner !== false && Boolean(bannerUrl);
   const copy = async (value, label) => {
     try {
       await navigator.clipboard.writeText(value);
@@ -30,7 +37,7 @@ export const DiscordWidget = ({ cfg }) => {
   };
   return (
     <div data-testid="widget-discord" className="isolate w-full min-w-0 overflow-hidden text-left text-white backdrop-blur-md" style={{ ...shell(cfg), boxShadow: `0 14px 36px rgba(0,0,0,.22), 0 0 ${Math.round((cfg.glow || 0) * 32)}px ${hexA(cfg.accent || "#5865f2", (cfg.glow || 0) * .5)}` }}>
-      <div className={`relative flex items-start justify-between overflow-hidden px-4 pt-3 ${expanded ? "h-24" : "h-16"}`} style={{ background: showBanner ? `linear-gradient(0deg, rgba(8,11,22,.22), rgba(8,11,22,.22)), url("${cfg.banner}") center / cover` : `radial-gradient(circle at 80% 0%, ${hexA(cfg.accent || "#5865f2", .6)}, transparent 58%), linear-gradient(125deg, #151a32, #22214b)` }}>
+      <div className={`relative flex items-start justify-between overflow-hidden px-4 pt-3 ${expanded ? "h-24" : "h-16"}`} style={{ background: showBanner ? `linear-gradient(0deg, rgba(8,11,22,.22), rgba(8,11,22,.22)), url("${bannerUrl}") center / cover` : `radial-gradient(circle at 80% 0%, ${hexA(cfg.accent || "#5865f2", .6)}, transparent 58%), linear-gradient(125deg, #151a32, #22214b)` }}>
         <span className="relative text-[10px] font-bold uppercase tracking-[.2em] text-white/85">Discord profile</span>
         <img src={iconUrl("discord", "ffffff")} alt="" className="relative h-5 w-5 opacity-80" />
       </div>
@@ -67,7 +74,7 @@ export const TikTokWidget = ({ cfg }) => {
         </div>
         <a href={`https://www.tiktok.com/@${handle}`} target="_blank" rel="noreferrer" className="rounded-full px-3 py-1 text-xs font-semibold text-black" style={{ background: cfg.accent }}>Follow</a>
       </div>
-      {vid && <iframe title="tiktok" src={`https://www.tiktok.com/embed/v2/${vid}`} className="h-[480px] w-full border-0" allow="encrypted-media" />}
+      {vid && <iframe title="tiktok" src={`https://www.tiktok.com/embed/v2/${vid}`} className="h-[360px] w-full border-0 sm:h-[480px]" allow="encrypted-media" />}
     </div>
   );
 };

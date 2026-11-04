@@ -22,9 +22,22 @@ test('Discord OAuth state returns the connection to the alias that opened it', (
   else process.env.DISCORD_CLIENT_SECRET = previous;
 });
 
-test('OAuth return origins reject untrusted forwarded hosts', () => {
+test('OAuth return origins reject untrusted forwarded hosts and third-party vercel.app subdomains', () => {
   assert.equal(requestOrigin({ headers: { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'user.pet' } }), 'https://user.pet');
+  assert.equal(requestOrigin({ headers: { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'upet-preview-123.vercel.app' } }), 'https://upet-preview-123.vercel.app');
+  assert.equal(requestOrigin({ headers: { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'attacker.vercel.app' } }), 'https://www.user.pet');
   assert.equal(requestOrigin({ headers: { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'attacker.example' } }), 'https://www.user.pet');
+});
+
+test('Discord OAuth state nonces cannot be replayed once consumed', () => {
+  const previous = process.env.DISCORD_CLIENT_SECRET;
+  process.env.DISCORD_CLIENT_SECRET = 'discord-oauth-test-secret';
+  const token = createDiscordState('firebase-user', 'https://user.pet');
+  const first = verifyDiscordState(token, { consume: true });
+  assert.equal(first.uid, 'firebase-user');
+  assert.throws(() => verifyDiscordState(token, { consume: true }), /already used/i);
+  if (previous === undefined) delete process.env.DISCORD_CLIENT_SECRET;
+  else process.env.DISCORD_CLIENT_SECRET = previous;
 });
 
 test('Discord callback can finish a connection when a mobile browser has no popup opener', () => {

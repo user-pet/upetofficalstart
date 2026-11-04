@@ -13,7 +13,7 @@ export default async function handler(request, response) {
   try {
     if (request.method !== 'GET') throw new Error('Method not allowed.');
     if (request.query?.error) throw new Error('Discord authorization was cancelled.');
-    const state = verifyDiscordState(request.query?.state);
+    const state = verifyDiscordState(request.query?.state, { consume: true });
     origin = state.returnOrigin || origin;
     const code = String(request.query?.code || '');
     if (!code) throw new Error('Discord did not return an authorization code.');

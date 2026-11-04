@@ -15,11 +15,33 @@ const LAYOUTS = [
   ["slideshow", "Slideshow", <div className="space-y-1">{[0.6, 0.4, 0.25].map((o, i) => <div key={i} className="h-3 w-full rounded" style={{ background: `hsl(var(--primary) / ${o})` }} />)}</div>],
 ];
 
+const THEME_PRESETS = [
+  { id: "midnight", name: "Midnight Glass", accent: "#62b5ff", cardColor: "#0e1d33", textColor: "#eaf4ff", bgColor: "#07111f", alpha: 0.72, blur: 22, radius: 28 },
+  { id: "cyber", name: "Cyber Neon", accent: "#a855f7", cardColor: "#160d29", textColor: "#f5edff", bgColor: "#090414", alpha: 0.78, blur: 26, radius: 24 },
+  { id: "obsidian", name: "Obsidian Minimal", accent: "#f4f4f5", cardColor: "#121214", textColor: "#fafafa", bgColor: "#070708", alpha: 0.86, blur: 16, radius: 20 },
+  { id: "sakura", name: "Sakura Frost", accent: "#ff85b3", cardColor: "#261321", textColor: "#fff0f6", bgColor: "#120810", alpha: 0.68, blur: 28, radius: 32 },
+  { id: "ember", name: "Sunset Ember", accent: "#fb923c", cardColor: "#24140e", textColor: "#fff7ed", bgColor: "#100805", alpha: 0.75, blur: 20, radius: 26 },
+  { id: "emerald", name: "Emerald Matrix", accent: "#34d399", cardColor: "#0b211a", textColor: "#ecfdf5", bgColor: "#040f0b", alpha: 0.74, blur: 24, radius: 24 },
+];
+
 export default function CardTab() {
-  const { user, setProfile } = useStore();
+  const { user, setProfile, updateProfile } = useStore();
   const p = user.profile;
   const c = p.card;
   const set = (k) => (v) => setProfile(`card.${k}`, v);
+  const applyPreset = (preset) => {
+    const patch = {
+      "card.accent": preset.accent,
+      "card.cardColor": preset.cardColor,
+      "card.textColor": preset.textColor,
+      "card.bgColor": preset.bgColor,
+      "card.alpha": preset.alpha,
+      "card.blur": preset.blur,
+      "card.radius": preset.radius,
+    };
+    if (updateProfile) updateProfile(patch);
+    else Object.entries(patch).forEach(([k, v]) => setProfile(k, v));
+  };
   const bs = p.badgeStyle;
   const tt = p.tooltips;
   const setB = (k) => (v) => setProfile(`badgeStyle.${k}`, v);
@@ -83,6 +105,31 @@ export default function CardTab() {
             <ColorRow testid="tooltip-color" label="Background" value={tt.color} onChange={setT("color")} />
             <ColorRow testid="tooltip-text" label="Text" value={tt.textColor} onChange={setT("textColor")} />
           </div>
+        </div>
+      </Panel>
+      <Panel title="Theme presets" desc="Apply a curated color and glass palette in one click without changing your text or links." testid="card-theme-presets">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+          {THEME_PRESETS.map((preset) => {
+            const active = c.accent.toLowerCase() === preset.accent.toLowerCase() && c.cardColor.toLowerCase() === preset.cardColor.toLowerCase();
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                data-testid={`theme-preset-${preset.id}`}
+                onClick={() => applyPreset(preset)}
+                className={`flex items-center gap-3 rounded-2xl border p-3 text-left transition-all hover:-translate-y-0.5 ${active ? "border-primary bg-primary/15 ring-2 ring-primary/30" : "bg-background/40 hover:bg-primary/10"}`}
+              >
+                <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-xl border border-white/15 shadow-inner" style={{ background: preset.bgColor }}>
+                  <span className="absolute inset-1 rounded-lg" style={{ background: preset.cardColor, border: `1.5px solid ${preset.accent}` }} />
+                  <span className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full" style={{ background: preset.accent }} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold">{preset.name}</span>
+                  <span className="block font-mono text-[10px] text-muted-foreground">{preset.accent}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </Panel>
       <Panel title="Colors" testid="card-colors">

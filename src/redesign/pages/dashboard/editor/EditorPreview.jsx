@@ -23,8 +23,8 @@ export default function EditorPreview({ tab }) {
   const { user, saveState } = useStore();
   const [view, setView] = useState(tab === 'entry' ? 'entry' : 'profile');
   const [expanded, setExpanded] = useState(false);
-  const [device, setDevice] = useState('desktop');
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [device, setDevice] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 768 ? 'mobile' : 'desktop'));
+  const [mobileOpen, setMobileOpen] = useState(true);
   const profile = useMemo(() => ({ ...user.profile, audio: { ...user.profile.audio, autoplay: false } }), [user.profile]);
   const sideLyrics = tab === 'lyrics' && ['left', 'right'].includes(profile.audio?.lyrics?.display);
 
@@ -49,8 +49,9 @@ export default function EditorPreview({ tab }) {
     <Dialog open={expanded} onOpenChange={setExpanded}>
       <DialogContent className="grid h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-[1200px] grid-rows-[auto_minmax(0,1fr)] gap-3 overflow-hidden rounded-2xl p-3 sm:h-[92dvh] sm:w-[96vw] sm:p-5" data-testid="expanded-editor-preview">
         <div className="flex flex-wrap items-center gap-2 pr-8"><DialogTitle className="mr-auto font-display text-base">Live preview</DialogTitle><ViewSwitch view={view} setView={setView} /><div className="inline-flex rounded-full border bg-background/60 p-1" role="group" aria-label="Preview device">{[['desktop', Monitor, 'Desktop'], ['mobile', Smartphone, 'Mobile']].map(([id, Icon, label]) => <button key={id} type="button" data-testid={`preview-device-${id}`} aria-label={label} aria-pressed={device === id} onClick={() => setDevice(id)} className={`rounded-full px-2.5 py-1.5 ${device === id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}><Icon className="h-4 w-4" /></button>)}</div></div>
-        <div className="flex min-h-0 items-center justify-center overflow-hidden rounded-2xl bg-black/35 p-2 sm:p-4"><PreviewFrame profile={profile} view={view} fitDesktop={device === 'desktop'} fitPreview={device === 'mobile'} onEnter={() => setView('profile')} className={device === 'mobile' ? 'h-full w-full max-w-[390px]' : 'h-full w-full'} /></div>
+        <div className="flex min-h-0 items-center justify-center overflow-hidden rounded-2xl bg-black/35 p-2 sm:p-4"><PreviewFrame profile={profile} view={view} fitDesktop={device === 'desktop'} fitPreview={false} onEnter={() => setView('profile')} className={device === 'mobile' ? 'h-full w-full max-w-[390px]' : 'h-full w-full'} /></div>
       </DialogContent>
     </Dialog>
+    <button type="button" onClick={() => setExpanded(true)} className="glass fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex items-center gap-1.5 rounded-full border border-primary/35 bg-background/90 px-3.5 py-2 text-xs font-semibold text-primary shadow-lg backdrop-blur-md xl:hidden" aria-label="Open live preview"><Maximize2 className="h-3.5 w-3.5" />Preview</button>
   </div>;
 }

@@ -7,7 +7,7 @@ import { Avatar, BadgeIcon } from '../../components/ProfileBits';
 import { PageTitle } from '../../components/Controls';
 
 export default function Leaderboard() {
-  const { user } = useStore();
+  const { user, db } = useStore();
   const [rows, setRows] = useState([]);
   const [state, setState] = useState('loading');
   const load = async () => {
@@ -18,9 +18,27 @@ export default function Leaderboard() {
       if (!response.ok || !Array.isArray(result.profiles)) throw new Error(result.error || 'Leaderboard could not be loaded.');
       setRows(result.profiles.slice(0, 50));
       setState('ready');
-    } catch { setState('error'); }
+    } catch {
+      const fallback = Object.values(db?.users || {})
+        .filter((entry) => entry && !entry.banned)
+        .map((entry) => ({
+          username: entry.username,
+          displayName: entry.profile?.displayName || entry.username,
+          avatar: entry.profile?.media?.avatar || { type: 'image', src: '' },
+          badges: entry.profile?.shownBadges || entry.profile?.badges || [],
+          views: Number(entry.profile?.views) || 0,
+        }))
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 50);
+      if (fallback.length) {
+        setRows(fallback);
+        setState('ready');
+      } else {
+        setState('error');
+      }
+    }
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [Object.keys(db?.users || {}).length]);
   return (
     <div data-testid="leaderboard-page">
       <PageTitle title="Leaderboard" sub="Most viewed published pages on user.pet. Rankings update about once an hour." />

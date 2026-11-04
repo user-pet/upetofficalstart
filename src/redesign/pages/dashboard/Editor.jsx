@@ -21,7 +21,7 @@ export default function Editor() {
       <PageTitle title="Editor" sub="Every change saves instantly and shows in the live preview." />
       <label className="glass sticky top-20 z-30 mb-4 flex items-center gap-3 rounded-xl px-3 py-2 shadow-lg shadow-black/20 md:hidden">
         <span className="text-xs font-semibold text-muted-foreground">Edit</span>
-        <select data-testid="editor-mobile-tab" value={tab} onChange={(event) => setTab(event.target.value)} className="min-w-0 flex-1 bg-transparent py-1 text-sm font-semibold outline-none">
+        <select data-testid="editor-mobile-tab" value={tab} onChange={(event) => { setTab(event.target.value); window.scrollTo({ top: 0, left: 0, behavior: "smooth" }); }} className="min-w-0 flex-1 bg-transparent py-1 text-sm font-semibold outline-none">
           {TABS.map(([id, label]) => <option key={id} value={id} className="bg-background text-foreground">{label}</option>)}
         </select>
       </label>

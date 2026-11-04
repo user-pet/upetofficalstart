@@ -9,9 +9,8 @@ import { SiteNavShell } from "./SitePrimitives";
 const TABS = [["Explore", "/explore"]];
 
 const AccountMenu = () => {
-  const { user, session, db, logout, switchTo } = useStore();
+  const { user, logout } = useStore();
   const nav = useNavigate();
-  const others = session.accounts.filter((a) => a !== user.username && db.users[a]);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -28,13 +27,6 @@ const AccountMenu = () => {
         <DropdownMenuItem data-testid="menu-dashboard" onClick={() => nav("/dashboard")} className="rounded-xl"><LayoutDashboard className="mr-2 h-4 w-4" />Dashboard</DropdownMenuItem>
         <DropdownMenuItem data-testid="menu-go-to-page" onClick={() => nav(`/${user.username}`)} className="rounded-xl"><ExternalLink className="mr-2 h-4 w-4" />Go to page</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Switch account</DropdownMenuLabel>
-        <DropdownMenuItem className="rounded-xl" disabled><Check className="mr-2 h-4 w-4 text-primary" />{user.username}</DropdownMenuItem>
-        {others.map((a) => (
-          <DropdownMenuItem key={a} data-testid={`menu-switch-${a}`} onClick={() => switchTo(a)} className="rounded-xl"><Repeat className="mr-2 h-4 w-4" />{a}</DropdownMenuItem>
-        ))}
-        <DropdownMenuItem data-testid="menu-add-account" onClick={() => nav("/login?add=1")} className="rounded-xl"><User className="mr-2 h-4 w-4" />Add another account</DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem data-testid="menu-logout" onClick={() => { logout(); nav("/"); }} className="rounded-xl text-red-500 focus:text-red-500"><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -47,7 +39,7 @@ export const Header = () => {
     <header className="fixed inset-x-0 top-5 z-50 flex justify-center px-4">
       <SiteNavShell data-testid="header-pill">
         <Link to="/" data-testid="header-logo"><Logo /></Link>
-        <div className="hidden items-center gap-1 sm:flex">
+        <div className="flex items-center gap-1">
           {TABS.map(([label, to]) => (
             <NavLink key={to} to={to} data-testid={`nav-${label.toLowerCase()}`} className={({ isActive }) => `rounded-full px-3 py-1.5 text-sm font-medium transition-colors sm:px-4 ${isActive ? "bg-primary/20 text-foreground" : "text-muted-foreground hover:bg-primary/10 hover:text-foreground"}`}>
               {label}

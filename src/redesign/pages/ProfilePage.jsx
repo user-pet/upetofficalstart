@@ -48,6 +48,32 @@ export default function ProfilePage() {
     return () => { active = false; unsubscribe(); };
   }, [normalized, recordView]);
 
+  useEffect(() => {
+    if (!profile) return undefined;
+    const locked = !entered && profile.entry?.mode === 'password' && Boolean(profile.entry?.passwordHash && profile.entry?.passwordSalt);
+    const title = locked
+      ? `@${profile.username} · user.pet`
+      : `${profile.displayName || profile.username} (@${profile.username}) · user.pet`;
+    const desc = locked
+      ? `Protected profile for @${profile.username} on user.pet.`
+      : (profile.bio || `Check out ${profile.displayName || `@${profile.username}`}'s links, music, and profile on user.pet.`);
+    document.title = title;
+    const setMeta = (attr, key, content) => {
+      let tag = document.head.querySelector(`meta[${attr}="${key}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute(attr, key);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    };
+    setMeta('name', 'description', desc);
+    setMeta('property', 'og:title', title);
+    setMeta('property', 'og:description', desc);
+    setMeta('name', 'theme-color', profile.card?.accent || '#07111f');
+    return undefined;
+  }, [profile, entered]);
+
   const cursorSrc = profile?.media.cursor?.src;
 
   if (loading) return <div className="grid min-h-screen place-items-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>;
@@ -60,14 +86,37 @@ export default function ProfilePage() {
   );
 
   const onMove = (event) => {
-    if (!profile.card.tilt) return;
+    if (!profile.card.tilt || window.matchMedia?.('(hover: none)').matches) return;
     const rect = event.currentTarget.getBoundingClientRect();
     setTilt({ x: ((event.clientY - rect.top) / rect.height - 0.5) * -8, y: ((event.clientX - rect.left) / rect.width - 0.5) * 8 });
   };
 
+  const passwordLocked = !entered && profile.entry?.mode === 'password' && Boolean(profile.entry?.passwordHash && profile.entry?.passwordSalt);
+  const sceneProfile = passwordLocked
+    ? {
+        ...profile,
+        bio: '',
+        links: [],
+        badges: [],
+        shownBadges: [],
+        audio: { ...profile.audio, src: '', embedUrl: '', autoplay: false, lyrics: { ...profile.audio?.lyrics, enabled: false, lines: [] } },
+        media: {
+          ...profile.media,
+          avatar: { ...profile.media?.avatar, src: '' },
+          banner: { ...profile.media?.banner, src: '' },
+          background: { ...profile.media?.background, src: '' },
+        },
+        widgets: {
+          ...profile.widgets,
+          discord: { ...profile.widgets?.discord, enabled: false },
+          tiktok: { ...profile.widgets?.tiktok, enabled: false },
+        },
+      }
+    : profile;
+
   return (
-    <div className={`fixed inset-x-0 top-0 z-0 h-[100dvh] ${cursorSrc ? 'upet-custom-cursor' : ''}`} data-testid="profile-page" onMouseMove={onMove} style={cursorSrc ? { '--upet-custom-cursor': `url("${cursorSrc.replace(/["\\]/g, '')}") 16 16, auto` } : undefined}>
-      {entered && profile.card.layout === 'slideshow' ? <ProfileScene p={profile} fitDesktop className="h-full w-full" /> : <ProfileScene p={profile} scrollable={entered} fitDesktop={entered} className="h-full w-full">
+    <div className={`fixed inset-x-0 top-0 z-0 h-[100dvh] ${cursorSrc ? 'upet-custom-cursor' : ''}`} data-testid="profile-page" onMouseMove={onMove} onMouseLeave={() => setTilt({ x: 0, y: 0 })} style={cursorSrc ? { '--upet-custom-cursor': `url("${cursorSrc.replace(/["'()\\\r\n]/g, '')}") 16 16, auto` } : undefined}>
+      {entered && profile.card.layout === 'slideshow' ? <ProfileScene p={profile} fitDesktop className="h-full w-full" /> : <ProfileScene p={sceneProfile} scrollable={entered} fitDesktop={entered} className="h-full w-full">
         {!entered ? (
           <EntryGate key={normalized} entry={profile.entry} accent={profile.card.accent} onEnter={() => setEntered(true)} />
         ) : (

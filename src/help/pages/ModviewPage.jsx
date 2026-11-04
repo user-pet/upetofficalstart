@@ -13,16 +13,38 @@ const founderSections = [['team', 'Staff & ranks', UserCog], ['audit', 'Activity
 const stamp = (value) => { const seconds = value?._seconds ?? value?.seconds; return seconds ? new Date(seconds * 1000).toLocaleString() : '—'; };
 const name = (value) => String(value || '').replaceAll('_', ' ');
 
+function handleLocalModview(sectionParams, options = {}) {
+  const sec = sectionParams?.section || 'overview';
+  if (sec === 'overview') return { counts: { openTickets: 0, safetyReports: 0, peopleApplications: 0 }, tickets: [] };
+  if (sec === 'tickets' || sec === 'reports') return { items: [] };
+  if (sec === 'applications') return { people: [] };
+  if (sec === 'accounts' || sec === 'badges') {
+    const q = String(sectionParams?.q || '').trim().toLowerCase();
+    if (!q) return { item: null };
+    return { item: { username: q.replace(/^@/, ''), email: 'amberepis0de.f@gmail.com', createdAt: { seconds: Math.floor(Date.now() / 1000) }, badges: ['staff', 'verified', 'og'] } };
+  }
+  if (sec === 'team') return { items: [{ id: 'local-dev-founder', username: 'amber', email: 'amberepis0de.f@gmail.com', role: 'owner', department: 'operations', jobTitle: 'Founder', active: true }] };
+  if (sec === 'access') return { items: [{ email: 'amberepis0de.f@gmail.com', role: 'founder', active: true }] };
+  if (sec === 'audit') return { items: [] };
+  return { ok: true };
+}
+
 async function request(user, section, options = {}) {
-  const token = await user.getIdToken();
-  const response = await fetch(`/api/modview${section ? `?${new URLSearchParams(section)}` : ''}`, { ...options, headers: { Authorization: `Bearer ${token}`, ...(options.body ? { 'Content-Type': 'application/json' } : {}) } });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'The request failed.');
-  return result;
+  if (user?.isLocalDev) return handleLocalModview(section, options);
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(`/api/modview${section ? `?${new URLSearchParams(section)}` : ''}`, { ...options, headers: { Authorization: `Bearer ${token}`, ...(options.body ? { 'Content-Type': 'application/json' } : {}) } });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'The request failed.');
+    return result;
+  } catch (err) {
+    if (import.meta.env?.DEV) return handleLocalModview(section, options);
+    throw err;
+  }
 }
 
 function Panel({ title, description, children }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(true);
   return <section className="help-card"><button type="button" className="flex w-full items-start gap-3 text-left sm:hidden" onClick={() => setMobileOpen((open) => !open)} aria-expanded={mobileOpen}><span className="min-w-0 flex-1"><span className="block text-base font-bold">{title}</span>{description && <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{description}</span>}</span><ChevronDown className={`mt-1 h-4 w-4 shrink-0 transition-transform ${mobileOpen ? 'rotate-180' : ''}`} /></button><div className="hidden sm:block"><h2 className="text-lg font-bold">{title}</h2>{description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}</div><div className={`${mobileOpen ? 'block' : 'hidden'} mt-5 sm:block`}>{children}</div></section>;
 }
 function Empty({ children = 'Nothing to show yet.' }) { return <p className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">{children}</p>; }

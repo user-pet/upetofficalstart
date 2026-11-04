@@ -10,6 +10,18 @@ import ModviewPage from './pages/ModviewPage';
 import StaffApplicationPage from './pages/StaffApplicationPage';
 import './help.css';
 
+function HelpScrollToTop() {
+  const { pathname, search, hash } = useLocation();
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, [pathname, search, hash]);
+  return null;
+}
+
 function UserGuard({ children }) { const { user, ready } = useHelpAuth(); const location = useLocation(); if (!ready) return <div className="help-loading">Loading...</div>; return user ? children : <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />; }
 function StaffGuard({ children }) { const { user, staff, ready } = useHelpAuth(); if (!ready) return <div className="help-loading">Loading...</div>; if (!user) return <Navigate to="/login?next=/staff" replace />; return staff?.active ? children : <Navigate to="/tickets" replace />; }
 
@@ -19,7 +31,7 @@ export default function HelpApp({ basename }) {
     const description = document.querySelector('meta[name="description"]');
     if (description) description.setAttribute('content', 'Search Upet help articles, contact support and manage private support tickets.');
   }, []);
-  return <HelpAuthProvider><BrowserRouter basename={basename}><Routes><Route element={<HelpShell />}><Route index element={<HelpHomePage />} /><Route path="search" element={<SearchPage />} /><Route path="category/:slug" element={<CategoryPage />} /><Route path="articles/:slug" element={<ArticlePage />} /><Route path="contact" element={<ContactPage />} /><Route path="login" element={<HelpLoginPage />} /><Route path="tickets/new" element={<UserGuard><NewTicketPage /></UserGuard>} /><Route path="tickets" element={<UserGuard><MyTicketsPage /></UserGuard>} /><Route path="tickets/:ticketId" element={<UserGuard><TicketDetailPage /></UserGuard>} />
+  return <HelpAuthProvider><BrowserRouter basename={basename}><HelpScrollToTop /><Routes><Route element={<HelpShell />}><Route index element={<HelpHomePage />} /><Route path="search" element={<SearchPage />} /><Route path="category/:slug" element={<CategoryPage />} /><Route path="articles/:slug" element={<ArticlePage />} /><Route path="contact" element={<ContactPage />} /><Route path="login" element={<HelpLoginPage />} /><Route path="tickets/new" element={<UserGuard><NewTicketPage /></UserGuard>} /><Route path="tickets" element={<UserGuard><MyTicketsPage /></UserGuard>} /><Route path="tickets/:ticketId" element={<UserGuard><TicketDetailPage /></UserGuard>} />
       <Route path="legal/:slug" element={<LegalPolicyPage />} /><Route path="join-team" element={<UserGuard><StaffApplicationPage /></UserGuard>} />
       <Route path="staff" element={<StaffGuard><Navigate to="/staff/modview" replace /></StaffGuard>} /><Route path="staff/tickets" element={<StaffGuard><StaffTicketsPage /></StaffGuard>} /><Route path="staff/tickets/:ticketId" element={<StaffGuard><StaffTicketPage /></StaffGuard>} /><Route path="staff/articles" element={<StaffGuard><StaffArticlePage /></StaffGuard>} /><Route path="staff/legal" element={<StaffGuard><StaffLegalPage /></StaffGuard>} /><Route path="staff/modview" element={<StaffGuard><ModviewPage /></StaffGuard>} /><Route path="staff/modview/:section" element={<StaffGuard><ModviewPage /></StaffGuard>} /><Route path="staff/founder" element={<StaffGuard><ModviewPage founder /></StaffGuard>} /><Route path="staff/founder/:section" element={<StaffGuard><ModviewPage founder /></StaffGuard>} /><Route path="staff/reports" element={<StaffGuard><Navigate to="/staff/modview/reports" replace /></StaffGuard>} /><Route path="staff/team" element={<StaffGuard><Navigate to="/staff/founder" replace /></StaffGuard>} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Routes></BrowserRouter><Toaster theme="dark" position="bottom-right" richColors /></HelpAuthProvider>;
 }

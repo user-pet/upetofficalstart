@@ -55,6 +55,7 @@ export default function LinksTab() {
   const [url, setUrl] = useState("");
   const [label, setLabel] = useState("");
   const [showAllPlatforms, setShowAllPlatforms] = useState(false);
+  const [dragIndex, setDragIndex] = useState(null);
   const urlRef = useRef(null);
   const ls = user.profile.linkStyle;
   const setL = (k) => (v) => setProfile(`linkStyle.${k}`, v);
@@ -73,6 +74,14 @@ export default function LinksTab() {
     const next = [...links];
     [next[i], next[i + d]] = [next[i + d], next[i]];
     setProfile("links", next);
+  };
+  const dropAt = (targetIndex) => {
+    if (dragIndex === null || dragIndex === targetIndex) return;
+    const next = [...links];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    setProfile("links", next);
+    setDragIndex(null);
   };
   const edit = (i, k, v) => setProfile(`links[${i}].${k}`, v);
   return (
@@ -103,7 +112,16 @@ export default function LinksTab() {
         </div>
         <ul className="mt-5 space-y-3">
           {links.map((l, i) => (
-            <li key={l.id} data-testid={`link-row-${i}`} className="grid gap-3 rounded-2xl border bg-background/40 p-3 md:grid-cols-[44px_minmax(120px,.45fr)_minmax(180px,1fr)_130px_auto] md:items-center">
+            <li
+              key={l.id}
+              data-testid={`link-row-${i}`}
+              draggable
+              onDragStart={() => setDragIndex(i)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={() => dropAt(i)}
+              onDragEnd={() => setDragIndex(null)}
+              className={`grid gap-3 rounded-2xl border bg-background/40 p-3 transition-opacity md:grid-cols-[44px_minmax(120px,.45fr)_minmax(180px,1fr)_130px_auto] md:items-center ${dragIndex === i ? "opacity-50 ring-2 ring-primary/40" : ""}`}
+            >
               <span className="grid h-11 w-11 place-items-center rounded-xl" style={{ color: `#${BRAND[l.platform]?.[0] || BRAND.website[0]}`, background: `#${BRAND[l.platform]?.[0] || BRAND.website[0]}16` }}><PlatformIcon platform={l.platform} color="currentColor" size={20} /></span>
               <Field label="Button text"><input className="w-full bg-transparent text-sm font-semibold outline-none" value={l.label} onChange={(e) => edit(i, "label", e.target.value)} /></Field>
               <Field label="Destination"><input className="w-full min-w-0 bg-transparent text-xs text-muted-foreground outline-none" value={l.url} onChange={(e) => { edit(i, "url", e.target.value); edit(i, "platform", detectPlatform(e.target.value)); }} /></Field>

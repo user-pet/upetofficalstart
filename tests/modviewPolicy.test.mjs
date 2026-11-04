@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertBusinessReady, may } from '../server/modviewPolicy.js';
+import { assertBusinessReady, isFounderIdentity, may } from '../server/modviewPolicy.js';
 import { applyProfileGrants } from '../src/redesign/lib/profileGrants.js';
 import { sanitizeRedesignProfile } from '../src/redesign/lib/profileModel.js';
 
@@ -42,4 +42,11 @@ test('a profile owner cannot publish an official badge without a grant', () => {
   const profile = sanitizeRedesignProfile({ badges: ['staff', 'verified'], shownBadges: ['staff', 'verified'] }, 'ordinary');
   assert.deepEqual(profile.badges, []);
   assert.deepEqual(profile.shownBadges, []);
+});
+
+test('founder identity requires emailVerified === true for all founder emails and claims', () => {
+  assert.equal(isFounderIdentity({ email: 'zurihcs@gmail.com', emailVerified: false }), false);
+  assert.equal(isFounderIdentity({ email: 'zurihcs@gmail.com', emailVerified: true }), true);
+  assert.equal(isFounderIdentity({ email: 'custom@example.com', emailVerified: false, claims: { founder: true } }), false);
+  assert.equal(isFounderIdentity({ email: 'custom@example.com', emailVerified: true, claims: { founder: true } }), true);
 });

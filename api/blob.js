@@ -1,9 +1,21 @@
 import { del, list } from '@vercel/blob';
 import { handleUpload } from '@vercel/blob/client';
 import { bearerToken, verifyFirebaseIdentity } from '../server/firebaseAuth.js';
+import { isFounderIdentity } from '../server/modviewPolicy.js';
+import { database } from '../server/visitorStore.js';
 import { createR2Upload, deleteR2Media, listR2Media, r2MediaConfigured } from '../server/r2Media.js';
 import { AUDIO_MIME_TYPES } from '../src/shared/mediaTypes.js';
 import { consumeUploadQuota, RateLimitError } from '../server/rateLimit.js';
+
+async function requireMemberAccess(identity) {
+  if (isFounderIdentity(identity)) return;
+  const db = database();
+  const email = String(identity?.email || '').trim().toLowerCase();
+  const invite = email ? await db.collection('accessInvites').doc(email).get() : null;
+  if (!invite?.exists || invite.data()?.active !== true || invite.data()?.role !== 'member') {
+    throw new Error('Active Upet member access is required.');
+  }
+}
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
 const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
@@ -43,6 +55,7 @@ export default async function handler(request, response) {
       const body = parsedBody(request);
       if (body.action === 'prepare-upload') {
         const account = await verifyFirebaseIdentity(bearerToken(request));
+        await requireMemberAccess(account);
         if (!r2MediaConfigured()) return response.status(200).json({ provider: 'vercel-blob' });
         const kind = String(body.kind || '');
         const rule = ASSET_RULES[kind];
@@ -62,6 +75,7 @@ export default async function handler(request, response) {
           // Every signed-in profile owner may upload media. Keep authorization
           // scoped to their Firebase UID below rather than limiting uploads to founders.
           const account = await verifyFirebaseIdentity(payload.idToken);
+          await requireMemberAccess(account);
           const kind = String(payload.kind || '');
           const rule = ASSET_RULES[kind];
           if (!rule) throw new Error('That file type is not supported.');
@@ -84,6 +98,7 @@ export default async function handler(request, response) {
     }
 
     const account = await verifyFirebaseIdentity(bearerToken(request));
+    await requireMemberAccess(account);
 
     if (request.method === 'GET') {
       const r2Items = r2MediaConfigured() ? await listR2Media(account.uid) : [];

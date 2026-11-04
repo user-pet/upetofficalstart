@@ -10,7 +10,7 @@ export default async function handler(request, response) {
   if (!isAllowedPreviewSource(source)) return response.status(400).json({ error: 'Invalid media URL.' });
 
   try {
-    const upstream = await fetch(source, { signal: AbortSignal.timeout(10000) });
+    const upstream = await fetch(source, { redirect: 'error', signal: AbortSignal.timeout(10000) });
     if (!upstream.ok) throw new Error('Media could not be loaded.');
     if (!String(upstream.headers.get('content-type') || '').toLowerCase().startsWith('image/')) throw new Error('Media is not an image.');
     const declaredSize = Number(upstream.headers.get('content-length') || 0);

@@ -35,21 +35,38 @@ function assertReady(user, username) {
 export async function getEditableRedesign(user, username) {
   assertReady(user, username);
   const [draftSnapshot, publicSnapshot, grantsSnapshot] = await Promise.all([
-    getDoc(draftRef(user.uid)),
+    getDoc(draftRef(user.uid)).catch(() => null),
     getDoc(profileRef(username)),
-    getDoc(doc(firestore, 'profileBadgeGrants', username)),
+    getDoc(doc(firestore, 'profileBadgeGrants', username)).catch(() => null),
   ]);
   const publicData = publicSnapshot.exists() ? publicSnapshot.data() : null;
   if (publicData && (publicData.ownerUid || publicData.uid) !== user.uid) throw new Error('This profile belongs to another account.');
-  const draftData = draftSnapshot.data();
+  const draftData = draftSnapshot?.data?.() || null;
   const document = draftData?.username === username
     ? draftData.document
     : publicData?.published || publicData?.draft || publicData;
-  return applyProfileGrants(redesignFromDocument(document, username), grantsSnapshot.data()?.badges);
+  return applyProfileGrants(redesignFromDocument(document, username), grantsSnapshot?.data?.()?.badges);
+}
+
+function readLocalDevPublicProfile(username) {
+  if (!username || typeof window === 'undefined') return null;
+  try {
+    const rawSession = window.localStorage.getItem('upet_local_dev_session_v1');
+    if (!rawSession) return null;
+    const session = JSON.parse(rawSession);
+    if (String(session?.username || '').toLowerCase() !== String(username).toLowerCase()) return null;
+    const rawProfile = window.localStorage.getItem('upet_local_dev_profile_v1');
+    const parsed = rawProfile ? JSON.parse(rawProfile) : {};
+    return sanitizeRedesignProfile(parsed, session.username);
+  } catch {
+    return null;
+  }
 }
 
 export async function getPublicRedesign(username) {
   if (!username) return null;
+  const localProfile = readLocalDevPublicProfile(username);
+  if (localProfile) return localProfile;
   if (!firestore) return username === 'dome' ? redesignFromDocument(domeProfilePreset, username) : null;
   try {
     const [snapshot, grantsSnapshot] = await Promise.all([getDoc(profileRef(username)), getDoc(doc(firestore, 'profileBadgeGrants', username))]);
@@ -64,6 +81,20 @@ export async function getPublicRedesign(username) {
 }
 
 export function subscribePublicRedesign(username, onChange, onError = () => {}) {
+  const localProfile = readLocalDevPublicProfile(username);
+  if (localProfile) {
+    onChange(localProfile);
+    const onStorage = () => {
+      const updated = readLocalDevPublicProfile(username);
+      if (updated) onChange(updated);
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('upet-local-profile-saved', onStorage);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('upet-local-profile-saved', onStorage);
+    };
+  }
   if (!username || !firestore) {
     onChange(username === 'dome' ? redesignFromDocument(domeProfilePreset, username) : null);
     return () => {};
@@ -75,16 +106,27 @@ export function subscribePublicRedesign(username, onChange, onError = () => {}) 
   const emit = () => {
     if (profileReady && grantsReady) onChange(publicProfileFromSnapshot(profileSnapshot, username, grants));
   };
+  const handleError = (err) => {
+    if (username === 'dome') {
+      onChange(redesignFromDocument(domeProfilePreset, username));
+      return;
+    }
+    onError(err);
+  };
   const stopProfile = onSnapshot(profileRef(username), (snapshot) => {
     profileSnapshot = snapshot;
     profileReady = true;
     emit();
-  }, onError);
+  }, handleError);
   const stopGrants = onSnapshot(doc(firestore, 'profileBadgeGrants', username), (snapshot) => {
     grants = snapshot.data()?.badges || [];
     grantsReady = true;
     emit();
-  }, onError);
+  }, () => {
+    grants = [];
+    grantsReady = true;
+    emit();
+  });
   return () => { stopProfile(); stopGrants(); };
 }
 
@@ -103,7 +145,7 @@ export function subscribeEditableRedesign(user, username, onChange, onError = ()
       onError(new Error('This profile belongs to another account.'));
       return;
     }
-    const draftData = draftSnapshot.data();
+    const draftData = draftSnapshot?.data?.() || null;
     const document = draftData?.username === username
       ? draftData.document
       : publicData?.published || publicData?.draft || publicData;
@@ -113,7 +155,11 @@ export function subscribeEditableRedesign(user, username, onChange, onError = ()
     draftSnapshot = snapshot;
     draftReady = true;
     emit();
-  }, onError);
+  }, () => {
+    draftSnapshot = { data: () => null };
+    draftReady = true;
+    emit();
+  });
   const stopPublic = onSnapshot(profileRef(username), (snapshot) => {
     publicSnapshot = snapshot;
     publicReady = true;
@@ -123,7 +169,11 @@ export function subscribeEditableRedesign(user, username, onChange, onError = ()
     grants = snapshot.data()?.badges || [];
     grantsReady = true;
     emit();
-  }, onError);
+  }, () => {
+    grants = [];
+    grantsReady = true;
+    emit();
+  });
   return () => { stopDraft(); stopPublic(); stopGrants(); };
 }
 
@@ -180,25 +230,34 @@ export async function saveRedesignProfile(user, username, profile, { publish = t
 }
 
 export async function listDirectoryProfiles() {
-  if (!firestore) return [];
-  const snapshot = await getDocs(query(collection(firestore, 'directoryProfiles'), orderBy('updatedAt', 'desc'), limit(60)));
-  return snapshot.docs.map((entry) => {
-    const data = entry.data();
-    const profile = sanitizeRedesignProfile({
-      username: data.username || entry.id,
-      displayName: data.displayName,
-      alias: data.alias,
-      media: { avatar: data.avatar },
-      badges: data.badges,
-      shownBadges: data.badges,
-      shop: data.shop,
-    }, data.username || entry.id);
-    const shownBadges = Array.isArray(data.badges) ? [...new Set(data.badges)] : [];
-    return {
-      username: profile.username,
-      role: 'user',
-      banned: false,
-      profile: { ...profile, badges: shownBadges, shownBadges },
-    };
-  });
+  const fallbackList = () => {
+    const dome = redesignFromDocument(domeProfilePreset, 'dome');
+    return [{ username: 'dome', role: 'founder', banned: false, profile: dome }];
+  };
+  if (!firestore) return fallbackList();
+  try {
+    const snapshot = await getDocs(query(collection(firestore, 'directoryProfiles'), orderBy('updatedAt', 'desc'), limit(60)));
+    const rows = snapshot.docs.map((entry) => {
+      const data = entry.data();
+      const profile = sanitizeRedesignProfile({
+        username: data.username || entry.id,
+        displayName: data.displayName,
+        alias: data.alias,
+        media: { avatar: data.avatar },
+        badges: data.badges,
+        shownBadges: data.badges,
+        shop: data.shop,
+      }, data.username || entry.id);
+      const shownBadges = Array.isArray(data.badges) ? [...new Set(data.badges)] : [];
+      return {
+        username: profile.username,
+        role: 'user',
+        banned: false,
+        profile: { ...profile, badges: shownBadges, shownBadges },
+      };
+    });
+    return rows.length ? rows : fallbackList();
+  } catch {
+    return fallbackList();
+  }
 }

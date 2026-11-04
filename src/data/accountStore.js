@@ -1,4 +1,4 @@
-import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, query, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { firestore } from '../app/firebase.js';
 import { canClaimSpecialUsername, normalizeUsername } from '../shared/username.js';
 export { normalizeUsername } from '../shared/username.js';
@@ -50,8 +50,25 @@ export async function claimUsername(user, rawUsername, role = 'member') {
 
 export async function getAccountForUser(user) {
   if (!firestore || !user?.uid) return null;
-  const snapshot = await getDoc(doc(firestore, 'users', user.uid));
-  return snapshot.exists() ? snapshot.data() : null;
+  try {
+    const snapshot = await getDoc(doc(firestore, 'users', user.uid));
+    if (snapshot.exists()) return snapshot.data();
+  } catch {}
+  try {
+    const dirSnap = await getDocs(query(collection(firestore, 'directoryProfiles'), limit(60)));
+    const match = dirSnap.docs.find((d) => d.data()?.ownerUid === user.uid);
+    if (match) {
+      const data = match.data();
+      return {
+        uid: user.uid,
+        username: data.username || match.id,
+        email: String(user.email || '').toLowerCase(),
+        role: 'founder',
+        createdAt: data.updatedAt || Date.now(),
+      };
+    }
+  } catch {}
+  return null;
 }
 
 export async function isUsernameAvailable(rawUsername, user) {

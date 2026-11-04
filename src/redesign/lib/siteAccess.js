@@ -7,6 +7,9 @@ const accessRequests = new Map();
 export async function getSiteAccess(user) {
   if (!user?.uid || !user.email) return null;
   if (isApprovedFounder(user)) return { role: 'founder', source: 'founder' };
+  if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+    return { role: 'founder', source: 'local-dev' };
+  }
   if (!firestore) return null;
   const email = user.email.trim().toLowerCase();
   const key = `${user.uid}:${email}`;

@@ -241,6 +241,17 @@ export default function LyricsTab() {
     if (syncIndex === index) setSyncIndex(target);
     else if (syncIndex === target) setSyncIndex(index);
   };
+  const dragRowRef = useRef(null);
+  const dropLineAt = (target) => {
+    const from = dragRowRef.current;
+    dragRowRef.current = null;
+    if (from === null || from === target || from < 0 || target < 0 || from >= linesRef.current.length || target >= linesRef.current.length) return;
+    const next = cloneLines(linesRef.current);
+    const [moved] = next.splice(from, 1);
+    next.splice(target, 0, moved);
+    saveLines(next, `drop:${moved.id}`);
+    if (syncIndex === from) setSyncIndex(target);
+  };
   const removeLine = (index) => {
     saveLines(linesRef.current.filter((_, row) => row !== index), `remove:${linesRef.current[index]?.id}`);
     if (syncIndex === index) setSyncIndex(null);
@@ -273,9 +284,9 @@ export default function LyricsTab() {
   const visibleTimingLines = lines.slice(timingStart, timingStart + pageSize);
   void historyTick;
 
-  const row = (line, index, mobile = false) => <div key={line.id} onClick={() => setSyncIndex(index)} className={`${mobile ? "rounded-2xl p-3" : "grid grid-cols-[24px_34px_88px_88px_minmax(150px,1fr)_auto] gap-2 rounded-xl p-2"} cursor-pointer border transition-all ${syncIndex === index ? "border-primary bg-primary/10 ring-2 ring-primary/20" : active === index ? "border-primary/50 bg-primary/[.07]" : "border-white/10 bg-background/40 hover:bg-primary/[.04]"}`}>
+  const row = (line, index, mobile = false) => <div key={line.id} draggable onDragStart={() => { dragRowRef.current = index; }} onDragOver={(event) => event.preventDefault()} onDrop={() => dropLineAt(index)} onClick={() => setSyncIndex(index)} className={`${mobile ? "rounded-2xl p-3" : "grid grid-cols-[24px_34px_88px_88px_minmax(150px,1fr)_auto] gap-2 rounded-xl p-2"} cursor-pointer border transition-all ${syncIndex === index ? "border-primary bg-primary/10 ring-2 ring-primary/20" : active === index ? "border-primary/50 bg-primary/[.07]" : "border-white/10 bg-background/40 hover:bg-primary/[.04]"}`}>
     {mobile ? <>
-      <div className="mb-2 flex items-center gap-2"><GripVertical className="h-4 w-4 text-white/25" /><span className={`grid h-7 w-7 place-items-center rounded-lg font-mono text-[11px] ${line.synced ? "bg-primary/15 text-primary" : "bg-white/5 text-muted-foreground"}`}>{index + 1}</span><span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{line.synced ? `${clock(line.time, true)} → ${line.endTime == null ? "auto" : clock(line.endTime, true)}` : "Waiting to sync"}</span><button type="button" onClick={(event) => { event.stopPropagation(); removeLine(index); }} aria-label="Delete lyric line" className="grid h-8 w-8 place-items-center rounded-lg bg-red-500/10 text-red-400"><Trash2 className="h-3.5 w-3.5" /></button></div>
+      <div className="mb-2 flex items-center gap-2"><GripVertical className="h-4 w-4 text-white/25" /><span className={`grid h-7 w-7 place-items-center rounded-lg font-mono text-[11px] ${line.synced ? "bg-primary/15 text-primary" : "bg-white/5 text-muted-foreground"}`}>{index + 1}</span><span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{line.synced ? `${clock(line.time, true)} → ${line.endTime == null ? "auto" : clock(line.endTime, true)}` : "Waiting to sync"}</span><button type="button" onClick={(event) => { event.stopPropagation(); move(index, -1); }} disabled={index === 0} aria-label="Move line up" className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 disabled:opacity-30"><ArrowUp className="h-3.5 w-3.5" /></button><button type="button" onClick={(event) => { event.stopPropagation(); move(index, 1); }} disabled={index === lines.length - 1} aria-label="Move line down" className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 disabled:opacity-30"><ArrowDown className="h-3.5 w-3.5" /></button><button type="button" onClick={(event) => { event.stopPropagation(); removeLine(index); }} aria-label="Delete lyric line" className="grid h-8 w-8 place-items-center rounded-lg bg-red-500/10 text-red-400"><Trash2 className="h-3.5 w-3.5" /></button></div>
       <input aria-label={`Lyric ${index + 1} text`} className={`${inputCls} h-10`} placeholder="Lyric line" value={line.text} onClick={(event) => event.stopPropagation()} onChange={(event) => updateLine(index, { text: event.target.value }, `text:${line.id}`)} />
       <div className="mt-2 grid grid-cols-2 gap-2"><TimeInput line={line} index={index} onCommit={(time) => changedStart(index, time)} /><TimeInput line={line} index={index} end onCommit={(endTime) => updateLine(index, { endTime }, `end:${line.id}`)} /></div>
       <div className="mt-2 flex items-center justify-between gap-2"><div className="flex gap-1"><button type="button" onClick={(event) => { event.stopPropagation(); nudge(index, -.1); }} className="rounded-lg bg-white/5 px-2.5 py-2 font-mono text-[11px]">−.1</button><button type="button" onClick={(event) => { event.stopPropagation(); nudge(index, .1); }} className="rounded-lg bg-white/5 px-2.5 py-2 font-mono text-[11px]">+.1</button></div><button type="button" onClick={(event) => { event.stopPropagation(); stamp(index); }} className="rounded-lg bg-primary/15 px-3 py-2 text-xs font-semibold text-primary">Set to playhead</button></div>

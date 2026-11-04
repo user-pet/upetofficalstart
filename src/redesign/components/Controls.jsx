@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 
-export const Panel = ({ title, desc, children, className = "", testid, defaultOpen = false }) => {
+export const Panel = ({ title, desc, children, className = "", testid, defaultOpen = true }) => {
   const [mobileOpen, setMobileOpen] = useState(defaultOpen);
   const collapsible = Boolean(title);
   return (
@@ -66,6 +66,7 @@ export const Field = ({ label, children }) => (
 export const inputCls = "w-full rounded-xl border bg-background/60 px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/25";
 export const btnCls = "inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-10px_hsl(var(--primary))] active:translate-y-0 disabled:opacity-50";
 export const ghostCls = "inline-flex items-center justify-center gap-2 rounded-full border bg-background/40 px-4 py-2 text-sm font-medium transition-colors hover:bg-primary/10";
+export const dangerCls = "inline-flex items-center justify-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/15 px-5 py-2.5 text-sm font-semibold text-rose-200 transition-colors hover:bg-rose-500/25 disabled:opacity-50";
 
 export const PageTitle = ({ title, sub }) => (
   <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-5 md:mb-8">

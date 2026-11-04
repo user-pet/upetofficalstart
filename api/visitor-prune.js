@@ -1,8 +1,17 @@
+import { timingSafeEqual } from 'node:crypto';
 import { database, now } from '../server/visitorStore.js';
+
+function validCronSecret(authorizationHeader) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  const expected = Buffer.from(`Bearer ${secret}`);
+  const received = Buffer.from(String(authorizationHeader || ''));
+  return expected.length === received.length && timingSafeEqual(expected, received);
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed.' });
-  if (!process.env.CRON_SECRET || req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) return res.status(403).json({ error: 'Access denied.' });
+  if (!validCronSecret(req.headers?.authorization)) return res.status(403).json({ error: 'Access denied.' });
   try {
     const db = database();
     let deleted = 0;

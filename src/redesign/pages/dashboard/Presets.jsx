@@ -46,7 +46,8 @@ export default function Presets() {
     }
     setBusy(key);
     try {
-      await changeProfilePreset(action, values);
+      const res = await changeProfilePreset(action, values);
+      if (res?.activatedProfile) replaceProfile(res.activatedProfile);
       await load();
       if (success) toast.success(success);
       return true;

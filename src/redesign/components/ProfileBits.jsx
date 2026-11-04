@@ -2,8 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { BADGES } from "../lib/catalog";
 import { ShieldCheck, Crown, Star, Sparkles, Zap, Bug, Heart, ShoppingBag, Award } from "lucide-react";
 
+export const safeCssUrl = (raw) => {
+  const s = String(raw || "").trim();
+  if (!s || !/^(https?:\/\/|\/|data:image\/(png|jpeg|jpg|webp|gif|avif);base64,)/i.test(s)) return undefined;
+  return `url("${s.replace(/["'()\\\r\n]/g, "")}")`;
+};
+
 export const mediaStyle = (m) => ({
-  backgroundImage: m && m.src ? `url(${m.src})` : undefined,
+  backgroundImage: m && m.src ? safeCssUrl(m.src) : undefined,
   backgroundSize: `${(m?.zoom || 1) * 100}%`,
   backgroundPosition: `${m?.x ?? 50}% ${m?.y ?? 50}%`,
   backgroundRepeat: "no-repeat",

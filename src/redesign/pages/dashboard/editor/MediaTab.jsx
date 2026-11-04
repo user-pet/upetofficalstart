@@ -38,7 +38,7 @@ const MediaBox = ({ slot, label, max, shape, video }) => {
           <PopoverTrigger asChild>
             <button data-testid={`media-settings-${slot}`} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary/10 py-1.5 text-xs font-medium transition-colors hover:bg-primary/20"><SlidersHorizontal className="h-3.5 w-3.5" />Settings</button>
           </PopoverTrigger>
-          <PopoverContent className="glass w-72 space-y-4 rounded-2xl" align="start">
+          <PopoverContent collisionPadding={12} className="glass max-h-[75dvh] w-[min(18rem,calc(100vw-1.5rem))] space-y-4 overflow-y-auto rounded-2xl" align="center">
             <div className="text-sm font-semibold">{label} settings</div>
             <SliderRow testid={`media-${slot}-zoom`} label="Zoom" value={m.zoom} min={1} max={4} step={0.05} unit="x" onChange={set("zoom")} />
             <SliderRow testid={`media-${slot}-blur`} label="Blur" value={m.blur} min={0} max={30} unit="px" onChange={set("blur")} />

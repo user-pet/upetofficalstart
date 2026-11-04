@@ -1,5 +1,5 @@
-import { NavLink, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { Suspense, useState } from 'react';
+import { NavLink, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Suspense, useLayoutEffect, useState } from 'react';
 import { LayoutGrid, PenTool, Award, Trophy, Settings as Cog, LogOut, ExternalLink, ChartNoAxesCombined, Menu, ShieldCheck, X, GalleryVerticalEnd } from "lucide-react";
 import { useStore } from "../../lib/store";
 import { useHelpAuth } from '../../../help/context/HelpAuth.jsx';
@@ -48,7 +48,7 @@ const Sidebar = () => {
             )}
           </NavLink>
         ))}
-        {staff?.active && <NavLink to="/dashboard/modview" onMouseEnter={() => warm('modview')} onFocus={() => warm('modview')} data-testid="sidebar-modview" className={({ isActive }) => `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive ? "bg-primary/20 text-foreground" : "text-muted-foreground hover:bg-primary/10 hover:text-foreground"}`}><ShieldCheck className="h-4 w-4" />Modview</NavLink>}
+        {(staff?.active || user.role === 'founder') && <NavLink to="/dashboard/modview" onMouseEnter={() => warm('modview')} onFocus={() => warm('modview')} data-testid="sidebar-modview" className={({ isActive }) => `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${isActive ? "bg-primary/20 text-foreground" : "text-muted-foreground hover:bg-primary/10 hover:text-foreground"}`}><ShieldCheck className="h-4 w-4" />Modview</NavLink>}
       </nav>
       <button data-testid="sidebar-view-page" onClick={() => nav(`/${user.username}`)} className="mb-2 flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"><ExternalLink className="h-4 w-4" />View my page</button>
       <button data-testid="sidebar-logout" onClick={out} className="mb-3 flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-500/10"><LogOut className="h-4 w-4" />Logout</button>
@@ -86,7 +86,7 @@ const MobileNav = () => {
         <button type="button" onClick={out} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-400"><LogOut className="h-4 w-4" />Logout</button>
       </nav></div>}
       <nav className="glass fixed inset-x-3 bottom-[max(.75rem,env(safe-area-inset-bottom))] z-40 grid grid-cols-4 rounded-2xl p-1.5 md:hidden">
-        {NAV.filter(([path]) => ['overview', 'editor'].includes(path)).map(([path, label, Icon]) => (
+        {NAV.filter(([path]) => ['overview', 'editor', 'profiles', 'settings'].includes(path)).map(([path, label, Icon]) => (
           <NavLink key={path} to={`/dashboard/${path}`} onPointerDown={() => warm(path)} className={({ isActive }) => `flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] ${isActive ? 'bg-primary/20 text-foreground' : 'text-muted-foreground'}`}>
             <Icon className="h-4 w-4" />{label}
           </NavLink>
@@ -98,6 +98,12 @@ const MobileNav = () => {
 
 export default function Dashboard() {
   const { user } = useStore();
+  const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [pathname]);
   return (
     <div className="dash-bg min-h-screen">
       <Sidebar />

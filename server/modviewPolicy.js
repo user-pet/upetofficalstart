@@ -5,9 +5,17 @@ export const STAFF_DEPARTMENTS = ['support', 'trust_safety', 'marketplace', 'com
 export const GRANTABLE_BADGES = ['staff', 'verified', 'premium', 'og', 'booster', 'bughunter', 'donor', 'seller'];
 export const REPORT_STATUSES = ['open', 'reviewing', 'resolved', 'dismissed'];
 export const ACCOUNT_STATUSES = ['active', 'restricted'];
-const FOUNDER_EMAILS = new Set(['zurihcs@gmail.com', 'lampjustlamp123@gmail.com', 'iamjayvonlol@gmail.com', 'riotsoffical@proton.me', 'daalt38@gmail.com']);
-export const isFounderIdentity = (identity) => FOUNDER_EMAILS.has(String(identity?.email || '').trim().toLowerCase())
-  || (String(identity?.email || '').trim().toLowerCase() === 'whatdidido6969@gmail.com' && identity?.emailVerified === true);
+const DEFAULT_FOUNDER_EMAILS = ['zurihcs@gmail.com', 'lampjustlamp123@gmail.com', 'iamjayvonlol@gmail.com', 'riotsoffical@proton.me', 'daalt38@gmail.com', 'whatdidido6969@gmail.com'];
+const founderEmailSet = () => {
+  const configured = String(process.env.FOUNDER_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
+  return new Set(configured.length ? configured : DEFAULT_FOUNDER_EMAILS);
+};
+export const isFounderIdentity = (identity) => Boolean(
+  identity?.emailVerified === true && (
+    identity?.claims?.founder === true ||
+    founderEmailSet().has(String(identity?.email || '').trim().toLowerCase())
+  )
+);
 export const may = (role, action) => role === 'owner' || ({
   overview: STAFF_ROLES,
   tickets: STAFF_ROLES,

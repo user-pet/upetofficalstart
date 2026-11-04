@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Eye, Link2, Award, CalendarDays, CheckCircle2, Circle, Upload, Copy, GalleryVerticalEnd, ArrowRight } from "lucide-react";
+import { Eye, Link2, Award, CalendarDays, CheckCircle2, Circle, Upload, Copy, GalleryVerticalEnd, ArrowRight, Share2, ExternalLink, QrCode } from "lucide-react";
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useStore, fileToDataUrl } from "../../lib/store";
 import { Panel, Field, inputCls, PageTitle } from "../../components/Controls";
@@ -29,7 +29,7 @@ export default function Overview() {
     ["Add music", !!(p.audio.src || p.audio.embedUrl), "editor"],
     ["Pick an avatar decoration", !!p.effects.decoration, "editor"],
     ["Enable a widget", p.widgets.discord.enabled || p.widgets.tiktok.enabled, "editor"],
-    ["Turn on 2FA", user.twofa.enabled, "settings"],
+    ["Customize entry screen", p.entry.title !== "click to enter" || p.entry.mode !== "button", "editor"],
     ["Connect Discord", !!user.connections.discord, "settings"],
   ];
   const done = tasks.filter((t) => t[1]).length;
@@ -101,7 +101,18 @@ export default function Overview() {
           </div>
           <div className="space-y-3">
             <Field label="Bio"><textarea data-testid="overview-bio" rows={3} className={inputCls} value={p.bio} onChange={(e) => setProfile("bio", e.target.value)} /></Field>
-            <button data-testid="overview-copy-link" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/${p.username}`); toast.success("Link copied"); }} className="flex items-center gap-2 text-xs text-primary"><Copy className="h-3.5 w-3.5" />{window.location.host}/{p.username}</button>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button type="button" data-testid="overview-copy-link" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/${p.username}`); toast.success("Link copied"); }} className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/25"><Copy className="h-3.5 w-3.5" />{window.location.host}/{p.username}</button>
+              <button type="button" data-testid="overview-share-btn" onClick={async () => {
+                const url = `${window.location.origin}/${p.username}`;
+                if (navigator.share) {
+                  try { await navigator.share({ title: `${p.displayName} (@${p.username})`, text: p.bio || `Check out @${p.username} on user.pet`, url }); return; } catch {}
+                }
+                navigator.clipboard?.writeText(url);
+                toast.success("Profile link copied to share");
+              }} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-background/50 px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-primary/10"><Share2 className="h-3.5 w-3.5 text-primary" />Share</button>
+              <button type="button" onClick={() => nav(`/${p.username}`)} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-background/50 px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-primary/10"><ExternalLink className="h-3.5 w-3.5 text-primary" />Open live</button>
+            </div>
           </div>
         </div>
       </Panel>

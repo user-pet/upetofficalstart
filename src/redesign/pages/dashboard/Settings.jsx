@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { KeyRound, AtSign, ShieldCheck, Plug, Loader2, Crown, Trash2, ArrowRightLeft } from 'lucide-react';
+import { KeyRound, AtSign, ShieldCheck, Plug, Loader2, Crown, Trash2, Globe, CheckCircle2, Copy, ExternalLink } from 'lucide-react';
 import { useStore } from '../../lib/store';
 import { iconUrl } from '../../lib/catalog';
 import { PageTitle, Panel, Field, inputCls, btnCls, ghostCls, dangerCls } from '../../components/Controls';
 import { auth } from '../../../app/firebase';
+import { isApprovedFounder } from '../../../app/FounderGate';
 
 function Password() {
   const { changePassword } = useStore();
@@ -305,12 +306,186 @@ function DeleteAccount() {
   );
 }
 
+function VerifyOnDiscord() {
+  const { user, updateProfile } = useStore();
+  const savedCode = user.profile?.integrations?.discordDomain?.code || '';
+  const [code, setCode] = useState(savedCode);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setCode(user.profile?.integrations?.discordDomain?.code || '');
+  }, [user.profile?.integrations?.discordDomain?.code]);
+
+  useEffect(() => {
+    if (!savedCode || !user.username) return;
+    fetch('/api/well-known-discord', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user.username, code: savedCode }),
+    }).catch(() => {});
+  }, [savedCode, user.username]);
+
+  const subdomainUrl = `https://${user.username}.user.pet`;
+  const wellKnownUrl = `${subdomainUrl}/.well-known/discord`;
+
+  const handleSave = async (event) => {
+    event.preventDefault();
+    const raw = code.trim();
+    if (!raw) {
+      updateProfile({ 'integrations.discordDomain': { code: '', updatedAt: Date.now() } });
+      await fetch('/api/well-known-discord', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user.username, code: '' }),
+      }).catch(() => {});
+      toast.success('Discord domain verification token cleared');
+      return;
+    }
+    const normalized = raw.startsWith('dh=') ? raw : `dh=${raw}`;
+    if (!/^dh=[a-zA-Z0-9_-]{6,128}$/.test(normalized)) {
+      toast.error('Enter a valid Discord verification code starting with dh=');
+      return;
+    }
+    setBusy(true);
+    updateProfile({
+      'integrations.discordDomain': {
+        code: normalized,
+        updatedAt: Date.now(),
+      },
+    });
+    await fetch('/api/well-known-discord', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user.username, code: normalized }),
+    }).catch(() => {});
+    setBusy(false);
+    setCode(normalized);
+    toast.success('Discord verification code active! Click Verify in Discord.');
+  };
+
+  const copyText = (value, label) => {
+    navigator.clipboard?.writeText(value);
+    toast.success(`${label} copied`);
+  };
+
+  return (
+    <Panel
+      title={
+        <span className="flex items-center gap-2">
+          <Globe className="h-4 w-4 text-primary" />
+          Verify on Discord
+          {savedCode && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+              <CheckCircle2 className="h-3 w-3" /> Ready to verify
+            </span>
+          )}
+        </span>
+      }
+      desc="Verify your personal user.pet subdomain on your Discord profile (Connections → Website)."
+      testid="settings-discord-domain"
+    >
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr]">
+        <div className="space-y-2.5 rounded-2xl border border-white/[0.08] bg-background/45 p-4 text-xs leading-relaxed text-muted-foreground">
+          <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">How it works in 4 steps</div>
+          <ol className="list-decimal space-y-1.5 pl-4 text-foreground/90">
+            <li>
+              In Discord, open <span className="font-semibold text-foreground">User Settings → Connections → Add → Website (Domain)</span>.
+            </li>
+            <li>
+              Enter <code className="rounded bg-white/[0.07] px-1.5 py-0.5 font-mono text-[11px] text-primary">{subdomainUrl}</code> as your domain.
+            </li>
+            <li>
+              Copy the <code className="rounded bg-white/[0.07] px-1.5 py-0.5 font-mono text-[11px] text-emerald-400">dh=...</code> token Discord shows for <code className="font-mono text-[11px]">/.well-known/discord</code>.
+            </li>
+            <li>
+              Paste it here, click <span className="font-semibold text-foreground">Save &amp; activate</span>, then hit <span className="font-semibold text-foreground">Verify</span> in Discord!
+            </li>
+          </ol>
+          <div className="mt-3 flex flex-wrap items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => copyText(subdomainUrl, 'Subdomain URL')}
+              className={`${ghostCls} h-8 px-3 text-[11px]`}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Copy {subdomainUrl}
+            </button>
+            {savedCode && (
+              <a
+                href={`/.well-known/discord?user=${encodeURIComponent(user.username)}`}
+                target="_blank"
+                rel="noreferrer"
+                data-testid="discord-domain-test-link"
+                className={`${ghostCls} h-8 px-3 text-[11px]`}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Test /.well-known/discord
+              </a>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleSave} className="flex flex-col justify-between rounded-2xl border border-primary/20 bg-primary/[0.04] p-4">
+          <div className="space-y-3">
+            <div>
+              <div className="text-[11px] font-medium text-muted-foreground">Target verification endpoint</div>
+              <div className="mt-1 truncate rounded-xl border border-white/[0.07] bg-black/30 px-3 py-2 font-mono text-xs text-foreground/85">
+                {wellKnownUrl}
+              </div>
+            </div>
+            <Field label="Discord verification content (dh=...)">
+              <input
+                data-testid="discord-domain-code-input"
+                className={`${inputCls} font-mono text-xs`}
+                placeholder="dh=9dd96a71e0fa4e77ff0ba037275fa875cd1cf7e5"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </Field>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {savedCode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCode('');
+                  updateProfile({ 'integrations.discordDomain': { code: '', updatedAt: Date.now() } });
+                  toast.success('Verification code removed');
+                }}
+                className={ghostCls}
+              >
+                Clear
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={busy}
+              data-testid="discord-domain-save-button"
+              className={`${btnCls} flex-1`}
+            >
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              {savedCode ? 'Update dh= token' : 'Save & activate'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Panel>
+  );
+}
+
 export default function Settings() {
+  const { user } = useStore();
+  const showFounderPanel = isApprovedFounder({ ...user, emailVerified: true });
+
   return (
     <div className="space-y-4" data-testid="settings-page">
-      <PageTitle title="Settings" sub="Security, identity, founder access and connected accounts." />
-      <FounderAndAccount />
+      <PageTitle title="Settings" sub="Security, identity, Discord domain verification, and connected accounts." />
+      {showFounderPanel && <FounderAndAccount />}
       <Identity />
+      <VerifyOnDiscord />
       <Password />
       <Panel title={<span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" />Two-factor authentication</span>} desc="Firebase multi-factor authentication will be enabled before public accounts open." testid="settings-2fa">
         <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">Coming soon</span>

@@ -63,7 +63,7 @@ export async function getAccountForUser(user) {
         uid: user.uid,
         username: data.username || match.id,
         email: String(user.email || '').toLowerCase(),
-        role: 'founder',
+        role: data.role === 'founder' ? 'founder' : 'member',
         createdAt: data.updatedAt || Date.now(),
       };
     }

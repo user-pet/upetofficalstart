@@ -26,7 +26,7 @@ export function StoreProvider({children}) {
   const [profile,setDraft]=React.useState(()=>{const base=defaultProfile('preview');return {...base,audio:{...base.audio,src:'/cleanup-test-tone.wav',title:'Preview audio',autoplay:false}};});
   const setProfile=React.useCallback((path,value)=>setDraft(old=>{const next=structuredClone(old);const keys=path.split('.');let target=next;for(const key of keys.slice(0,-1))target=target[key];target[keys.at(-1)]=value;return next;}),[]);
   const updateProfile=React.useCallback(changes=>{for(const [path,value] of Object.entries(changes))setProfile(path,value);},[setProfile]);
-  const user=signedIn?{uid:'local-preview',username:'preview',role:'founder',profile}:null;
+  const user=signedIn?{uid:'local-preview',username:'preview',email:'preview@example.test',role:'member',profile,connections:{}}:null;
   window.__cleanupProfile=profile;
   const value={user,ready:true,needsClaim:false,theme:'dark',toggleTheme:()=>{},session:{accounts:['preview']},db:{users:user?{preview:user}:{}},saveState:'saved',setProfile,updateProfile,
     login:async(email,password)=>{const ok=email==='preview@example.test'&&password==='local-test';if(ok)setSignedIn(true);return {ok,error:'Invalid local fixture credentials'};},
@@ -92,6 +92,9 @@ try {
   await page.getByTestId('explore-filter-popular').click();
   await page.goto(`${origin}/status`);
   await page.getByTestId('coming-soon-status').waitFor();
+  await page.goto(`${origin}/donate`);
+  await page.getByTestId('donate-page').waitFor();
+  await page.getByTestId('donate-currently-available').waitFor();
   await page.goto(`${origin}/changelog`);
   await page.getByTestId('coming-soon-changelog').waitFor();
   await page.goto(`${origin}/dashboard`);
@@ -118,6 +121,8 @@ try {
   await page.getByTestId('editor-tab-card').click();
   await page.getByTestId('theme-preset-cyber').click();
   await page.waitForFunction(() => window.__cleanupProfile.card.accent === '#a855f7');
+  await page.getByTestId('card-font-editorial').click();
+  await page.waitForFunction(() => window.__cleanupProfile.card.font === 'editorial');
   await page.getByTestId('card-display-name').fill('Edited locally');
   await page.waitForFunction(() => window.__cleanupProfile.displayName === 'Edited locally');
   await page.getByTestId('editor-tab-audio').click();

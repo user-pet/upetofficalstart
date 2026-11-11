@@ -236,11 +236,11 @@ function friendlyAuthError(error, fallback) {
 ```
 
 #### 3. What it means
-The Firebase project (`upet-c480b`) only listed `upet-c480b.firebaseapp.com`, `upet-c480b.web.app`, and `user.pet` in its server-side `authorizedDomains` list — `localhost` and `127.0.0.1` were not added in the Firebase Console. When `signInWithPopup` runs on an unauthorized domain, Firebase's popup immediately closes and throws `auth/unauthorized-domain` (or `auth/popup-closed-by-user`). Furthermore, any leftover `"amber"` seed account in `localStorage` polluted the session state.
+The Firebase project (`upet-c480b`) did not authorize `localhost`, so `signInWithPopup` immediately failed with `auth/unauthorized-domain`. The Firebase Console rejected `localhost` as an invalid domain; `lvh.me` is now authorized instead and resolves to `127.0.0.1`. Any leftover `"amber"` seed account in `localStorage` also polluted the session state.
 
 #### 4. How to fix it
-1. Remove all automatic `"amber"` fallback logins and add `purgeAmberAccount()` in `src/redesign/lib/store.js` and `src/help/context/HelpAuth.jsx` to scrub any cached `"amber"` user from `localStorage` on startup.
-2. Detect `auth/unauthorized-domain` (and `localhost` popup failures) in `friendlyAuthError` (`src/redesign/lib/store.js`) and `Login.jsx`, displaying a clear `domainHint` banner explaining that Email/Password login works immediately on `localhost` while Google OAuth requires adding `localhost` in Firebase Console → Authentication → Settings → Authorized domains.
+1. Remove automatic `"amber"` fallback logins and scrub any cached `"amber"` user from `localStorage` on startup.
+2. The local launcher now opens `http://lvh.me:8080/login`; Vite allows that host, and Firebase has `lvh.me` in Authorized domains. `lvh.me` resolves to this machine, allowing Google sign-in locally. The login page directs local users to this URL when Google OAuth is attempted from an unauthorized host.
 
 #### 5. New code
 ```javascript

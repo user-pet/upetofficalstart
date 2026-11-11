@@ -1,23 +1,43 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Eye, Link2, Award, CalendarDays, CheckCircle2, Circle, Upload, Copy, GalleryVerticalEnd, ArrowRight, Share2, ExternalLink, QrCode } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  Copy,
+  ExternalLink,
+  Eye,
+  GalleryVerticalEnd,
+  Link2,
+  Share2,
+  Upload,
+} from "lucide-react";
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useStore, fileToDataUrl } from "../../lib/store";
 import { Panel, Field, inputCls, PageTitle } from "../../components/Controls";
 import { Avatar } from "../../components/ProfileBits";
 
-const Stat = ({ icon: Icon, label, value, i }) => (
-  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} className="glass rounded-2xl p-5" data-testid={`stat-${label.toLowerCase().replace(/\s/g, "-")}`}>
-    <div className="flex items-center justify-between text-xs text-muted-foreground">{label}<Icon className="h-4 w-4 text-primary" /></div>
-    <div className="mt-3 font-display text-3xl font-black">{value}</div>
-  </motion.div>
+const Stat = ({ icon: Icon, label, value }) => (
+  <div
+    className="rounded-2xl border border-white/[0.08] bg-[#0a0a0f] p-5 shadow-[0_18px_50px_-28px_rgba(0,0,0,0.85)]"
+    data-testid={`stat-${label.toLowerCase().replace(/\s/g, "-")}`}
+  >
+    <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
+      <span>{label}</span>
+      <Icon className="h-4 w-4 text-white" />
+    </div>
+    <div className="mt-3 font-display text-3xl font-bold tracking-tight text-white">{value}</div>
+  </div>
 );
 
 export default function Overview() {
   const { user, setProfile, refreshProfileAnalytics } = useStore();
-  useEffect(() => { refreshProfileAnalytics().catch(() => {}); }, [refreshProfileAnalytics]);
+  useEffect(() => {
+    refreshProfileAnalytics().catch(() => {});
+  }, [refreshProfileAnalytics]);
   const nav = useNavigate();
   const file = useRef(null);
   const p = user.profile;
@@ -38,21 +58,21 @@ export default function Overview() {
     const f = e.target.files[0];
     if (!f) return;
     try {
-      setProfile("media.avatar.src", await fileToDataUrl(f, 400, 'avatar'));
-      setProfile("media.avatar.type", f.type.startsWith('video/') ? 'video' : 'image');
+      setProfile("media.avatar.src", await fileToDataUrl(f, 400, "avatar"));
+      setProfile("media.avatar.type", f.type.startsWith("video/") ? "video" : "image");
       toast.success("Profile picture updated");
     } catch (error) {
-      toast.error(error?.message || 'Profile picture could not be uploaded');
+      toast.error(error?.message || "Profile picture could not be uploaded");
     }
   };
   return (
     <div data-testid="overview-page">
       <PageTitle title={`Hey, ${p.alias}`} sub="Here is how your page is doing." />
       <div className="grid gap-4 md:grid-cols-4">
-        <Stat i={0} icon={Eye} label="Profile views" value={p.views} />
-        <Stat i={1} icon={Link2} label="Links" value={p.links.length} />
-        <Stat i={2} icon={Award} label="Badges" value={p.badges.length} />
-        <Stat i={3} icon={CalendarDays} label="Days active" value={days} />
+        <Stat icon={Eye} label="Profile views" value={p.views} />
+        <Stat icon={Link2} label="Links" value={p.links.length} />
+        <Stat icon={Award} label="Badges" value={p.badges.length} />
+        <Stat icon={CalendarDays} label="Days active" value={days} />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         <Panel title="Views" desc="Recent activity sample" testid="overview-chart">
@@ -60,58 +80,166 @@ export default function Overview() {
             {history.length ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={history}>
-                  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6cc4ff" stopOpacity={0.6} /><stop offset="100%" stopColor="#6cc4ff" stopOpacity={0} /></linearGradient></defs>
-                  <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.4} />
-                  <Tooltip contentStyle={{ borderRadius: 12, border: "none" }} />
-                  <Area type="monotone" dataKey="views" stroke="#38aaff" strokeWidth={2} fill="url(#g)" />
+                  <defs>
+                    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="day" tick={{ fontSize: 11 }} stroke="#71717a" />
+                  <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "#0a0a0f", color: "#fff" }} />
+                  <Area type="monotone" dataKey="views" stroke="#ffffff" strokeWidth={2} fill="url(#g)" />
                 </AreaChart>
               </ResponsiveContainer>
-            ) : <div className="grid h-full place-items-center text-sm text-muted-foreground">No views yet — share your link.</div>}
+            ) : (
+              <div className="grid h-full place-items-center text-sm text-zinc-500">
+                No views yet — share your link.
+              </div>
+            )}
           </div>
         </Panel>
         <Panel title="Suggestions" desc={`${done}/${tasks.length} complete`} testid="overview-suggestions">
-          <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-primary/15"><motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${(done / tasks.length) * 100}%` }} /></div>
+          <div className="mb-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full bg-white transition-all duration-300"
+              style={{ width: `${(done / tasks.length) * 100}%` }}
+            />
+          </div>
           <ul className="space-y-1">
             {tasks.map(([t, ok, to], i) => (
               <li key={t}>
-                <button data-testid={`suggestion-${i}`} onClick={() => nav(`/dashboard/${to}`)} className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-primary/10">
-                  {ok ? <CheckCircle2 className="h-4 w-4 fill-emerald-500 text-white dark:text-background" /> : <Circle className="h-4 w-4 text-muted-foreground" />}
-                  <span className={ok ? "text-muted-foreground line-through" : ""}>{t}</span>
+                <button
+                  data-testid={`suggestion-${i}`}
+                  onClick={() => nav(`/dashboard/${to}`)}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-zinc-200 transition-colors hover:bg-white/[0.06]"
+                >
+                  {ok ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                  ) : (
+                    <Circle className="h-4 w-4 shrink-0 text-zinc-500" />
+                  )}
+                  <span className={ok ? "text-zinc-500 line-through" : ""}>{t}</span>
                 </button>
               </li>
             ))}
           </ul>
         </Panel>
       </div>
-      <button type="button" onClick={() => nav('/dashboard/profiles')} className="glass group mt-4 flex w-full items-center gap-4 rounded-2xl border border-primary/20 p-4 text-left transition-colors hover:bg-primary/[.07] sm:p-5">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary"><GalleryVerticalEnd className="h-5 w-5" /></span>
-        <span className="min-w-0 flex-1"><strong className="block font-display">Your profile presets</strong><span className="mt-1 block text-xs leading-relaxed text-muted-foreground">Save up to five complete looks and choose which one is live.</span></span>
-        <ArrowRight className="h-4 w-4 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+      <button
+        type="button"
+        onClick={() => nav("/dashboard/profiles")}
+        className="group mt-4 flex w-full items-center gap-4 rounded-2xl border border-white/[0.08] bg-[#0a0a0f] p-4 text-left transition-colors hover:border-white/25 hover:bg-[#0f0f17] sm:p-5"
+      >
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/[0.06] text-white">
+          <GalleryVerticalEnd className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <strong className="block font-display text-sm text-white">Your profile presets</strong>
+          <span className="mt-1 block text-xs leading-relaxed text-zinc-400">
+            Save up to five complete looks and choose which one is live.
+          </span>
+        </span>
+        <ArrowRight className="h-4 w-4 shrink-0 text-white transition-transform group-hover:translate-x-1" />
       </button>
       <Panel title="Basics" className="mt-4" testid="overview-basics">
         <div className="grid gap-6 md:grid-cols-[auto_1fr_1fr]">
           <div className="flex flex-col items-center gap-3">
-            <Avatar media={p.media.avatar} name={p.username} size={84} decoration={p.effects.decoration} hue={p.effects.decoHue} decoSize={p.effects.decoSize} />
-            <input ref={file} type="file" accept="image/*,video/mp4,video/webm,video/quicktime" hidden onChange={upload} />
-            <button data-testid="overview-upload-pfp" onClick={() => file.current.click()} className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-primary/30"><Upload className="h-3.5 w-3.5" />Upload pfp</button>
+            <Avatar
+              media={p.media.avatar}
+              name={p.username}
+              size={84}
+              decoration={p.effects.decoration}
+              hue={p.effects.decoHue}
+              decoSize={p.effects.decoSize}
+            />
+            <input
+              ref={file}
+              type="file"
+              accept="image/*,video/mp4,video/webm,video/quicktime"
+              hidden
+              onChange={upload}
+            />
+            <button
+              data-testid="overview-upload-pfp"
+              onClick={() => file.current.click()}
+              className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-[#050507] transition-colors hover:bg-zinc-200"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              Upload pfp
+            </button>
           </div>
           <div className="space-y-3">
-            <Field label="Alias"><input data-testid="overview-alias" className={inputCls} value={p.alias} onChange={(e) => setProfile("alias", e.target.value)} /></Field>
-            <Field label="Display name"><input data-testid="overview-display-name" className={inputCls} value={p.displayName} onChange={(e) => setProfile("displayName", e.target.value)} /></Field>
+            <Field label="Alias">
+              <input
+                data-testid="overview-alias"
+                className={inputCls}
+                value={p.alias}
+                onChange={(e) => setProfile("alias", e.target.value)}
+              />
+            </Field>
+            <Field label="Display name">
+              <input
+                data-testid="overview-display-name"
+                className={inputCls}
+                value={p.displayName}
+                onChange={(e) => setProfile("displayName", e.target.value)}
+              />
+            </Field>
           </div>
           <div className="space-y-3">
-            <Field label="Bio"><textarea data-testid="overview-bio" rows={3} className={inputCls} value={p.bio} onChange={(e) => setProfile("bio", e.target.value)} /></Field>
+            <Field label="Bio">
+              <textarea
+                data-testid="overview-bio"
+                rows={3}
+                className={inputCls}
+                value={p.bio}
+                onChange={(e) => setProfile("bio", e.target.value)}
+              />
+            </Field>
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <button type="button" data-testid="overview-copy-link" onClick={() => { navigator.clipboard?.writeText(`${window.location.origin}/${p.username}`); toast.success("Link copied"); }} className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/25"><Copy className="h-3.5 w-3.5" />{window.location.host}/{p.username}</button>
-              <button type="button" data-testid="overview-share-btn" onClick={async () => {
-                const url = `${window.location.origin}/${p.username}`;
-                if (navigator.share) {
-                  try { await navigator.share({ title: `${p.displayName} (@${p.username})`, text: p.bio || `Check out @${p.username} on user.pet`, url }); return; } catch {}
-                }
-                navigator.clipboard?.writeText(url);
-                toast.success("Profile link copied to share");
-              }} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-background/50 px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-primary/10"><Share2 className="h-3.5 w-3.5 text-primary" />Share</button>
-              <button type="button" onClick={() => nav(`/${p.username}`)} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-background/50 px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-primary/10"><ExternalLink className="h-3.5 w-3.5 text-primary" />Open live</button>
+              <button
+                type="button"
+                data-testid="overview-copy-link"
+                onClick={() => {
+                  navigator.clipboard?.writeText(`${window.location.origin}/${p.username}`);
+                  toast.success("Link copied");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-[#050507] transition-colors hover:bg-zinc-200"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                {window.location.host}/{p.username}
+              </button>
+              <button
+                type="button"
+                data-testid="overview-share-btn"
+                onClick={async () => {
+                  const url = `${window.location.origin}/${p.username}`;
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: `${p.displayName} (@${p.username})`,
+                        text: p.bio || `Check out @${p.username} on user.pet`,
+                        url,
+                      });
+                      return;
+                    } catch {}
+                  }
+                  navigator.clipboard?.writeText(url);
+                  toast.success("Profile link copied to share");
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[#060609] px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/25 hover:text-white"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                Share
+              </button>
+              <button
+                type="button"
+                onClick={() => nav(`/${p.username}`)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[#060609] px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-white/25 hover:text-white"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Open live
+              </button>
             </div>
           </div>
         </div>

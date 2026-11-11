@@ -4,6 +4,13 @@ module.exports = {
   content: ['./index.html', './src/redesign/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Geist"', '"Manrope"', 'system-ui', 'sans-serif'],
+        display: ['"Manrope"', '"Geist"', 'system-ui', 'sans-serif'],
+        ui: ['"Urbanist"', '"Geist"', 'system-ui', 'sans-serif'],
+        serif: ['"Playfair Display"', '"Instrument Serif"', 'Georgia', 'serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',

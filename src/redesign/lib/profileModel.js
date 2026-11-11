@@ -15,6 +15,8 @@ const assetUrl = (value) => {
   const url = String(value || '').trim();
   if (!url) return '';
   if (url.startsWith('/') && !url.startsWith('//')) return url.slice(0, 2048);
+  if (/^data:image\/(png|jpeg|jpg|webp|gif|avif);base64,[a-z0-9+/=\s]+$/i.test(url)) return url.slice(0, 250_000);
+  if (/^data:(font\/(ttf|otf|woff|woff2)|application\/(x-font-ttf|x-font-opentype|font-woff|font-woff2|octet-stream));base64,[a-z0-9+/=\s]+$/i.test(url)) return url.slice(0, 350_000);
   try {
     const parsed = new URL(url);
     return ['https:', 'http:'].includes(parsed.protocol) ? parsed.toString().slice(0, 2048) : '';
@@ -54,9 +56,9 @@ export const defaultProfile = (username = '') => ({
   shownBadges: [],
   badgeOrder: [],
   media: { avatar: media(), banner: media(), background: media(), cursor: media() },
-  effects: { text: 'none', textColor: '#6cc4ff', background: 'none', backgroundAmount: 50, backgroundColor: '#ffffff', overlay: 'none', decoration: null, decoHue: 0, decoSize: 120 },
-  entry: { mode: 'button', title: 'click to enter', subtitle: '', textEffect: 'none', passwordSalt: '', passwordHash: '' },
-  card: { layout: 'minimal', alpha: 0.6, radius: 24, width: 440, blur: 14, accent: '#6cc4ff', cardColor: '#0b1626', textColor: '#ffffff', bgColor: '#07111f', borderAlpha: 0.15, tilt: true },
+  effects: { text: 'none', textColor: '#6cc4ff', background: 'none', backgroundAmount: 50, backgroundColor: '#ffffff', overlay: 'none', cursor: 'none', cursorPreset: 'default', cursorColor: '#6cc4ff', decoration: null, decoHue: 0, decoSize: 120 },
+  entry: { mode: 'button', title: 'click to enter', subtitle: '', textEffect: 'none', font: '', passwordSalt: '', passwordHash: '' },
+  card: { layout: 'minimal', entrance: 'none', font: 'geist', customFontUrl: '', customFontName: '', nameSize: 'md', bioStyle: 'normal', alpha: 0.6, radius: 24, width: 440, blur: 14, accent: '#6cc4ff', cardColor: '#0b1626', textColor: '#ffffff', bgColor: '#07111f', borderAlpha: 0.15, tilt: true },
   links: [],
   widgets: {
     discord: { enabled: false, userId: '', username: '', handle: '', avatar: '', banner: '', decoration: '', guildTag: '', guildBadge: '', publicFlags: 0, layout: 'compact', showBanner: true, showBadges: true, glow: 0, alpha: 0.5, radius: 16, accent: '#5865f2' },
@@ -121,6 +123,16 @@ export function sanitizeRedesignProfile(source = {}, username = '') {
       ? { id: text(entry.id, 32), username: text(entry.username, 80), handle: text(entry.handle, 80), avatar: assetUrl(entry.avatar), banner: assetUrl(entry.banner), decoration: assetUrl(entry.decoration), guildTag: text(entry.guildTag, 4), guildBadge: assetUrl(entry.guildBadge), publicFlags: clamp(entry.publicFlags, 0, 0x7fffffff, 0), accentColor: color(entry.accentColor, ''), fetchedAt: clamp(entry.fetchedAt, 0, Number.MAX_SAFE_INTEGER, 0) }
       : { id: text(entry.id, 80), username: text(entry.username, 80), handle: text(entry.handle, 80), avatar: assetUrl(entry.avatar) };
   }
+  if (source.integrations?.discordDomain && typeof source.integrations.discordDomain === 'object') {
+    const rawCode = text(source.integrations.discordDomain.code || '', 120).trim();
+    const normalizedCode = rawCode ? (rawCode.startsWith('dh=') ? rawCode : `dh=${rawCode}`) : '';
+    if (normalizedCode) {
+      integrations.discordDomain = {
+        code: normalizedCode,
+        updatedAt: clamp(source.integrations.discordDomain.updatedAt, 0, Number.MAX_SAFE_INTEGER, Date.now()),
+      };
+    }
+  }
 
   const profile = {
     username: normalizedUsername,
@@ -147,6 +159,9 @@ export function sanitizeRedesignProfile(source = {}, username = '') {
       backgroundAmount: clamp(source.effects?.backgroundAmount, 0, 100, 50),
       backgroundColor: color(source.effects?.backgroundColor, '#ffffff'),
       overlay: text(source.effects?.overlay || 'none', 32),
+      cursor: oneOf(source.effects?.cursor, ['none', 'splash', 'sparkle', 'blob', 'crosshair', 'spotlight', 'pixel'], 'none'),
+      cursorPreset: oneOf(source.effects?.cursorPreset, ['default', 'neon-arrow', 'obsidian', 'crosshair', 'dot', 'pixel-sword', 'cyber-ring', 'star', 'cat', 'ghost', 'heart', 'plus'], 'default'),
+      cursorColor: color(source.effects?.cursorColor, source.card?.accent || '#6cc4ff'),
       decoration: source.effects?.decoration ? {
         id: text(source.effects.decoration.id, 80),
         label: text(source.effects.decoration.label, 80),
@@ -160,11 +175,18 @@ export function sanitizeRedesignProfile(source = {}, username = '') {
       title: text(source.entry?.title ?? 'click to enter', 80),
       subtitle: text(source.entry?.subtitle, 160),
       textEffect: oneOf(source.entry?.textEffect, ['none', 'glitch', 'typewriter', 'flicker', 'rainbow', 'neon', 'wave', 'bounce', 'shake', 'gradient', 'blurin', 'scramble', 'rgb', 'outline', 'pulse', 'fire', 'ice', 'sparkle', 'float', 'chroma', '3d', 'swing', 'morph'], 'none'),
+      font: oneOf(source.entry?.font, ['', 'geist', 'manrope', 'urbanist', 'space', 'syne', 'outfit', 'jakarta', 'sora', 'editorial', 'instrument', 'mono', 'jetbrains', 'orbitron', 'pixel', 'gothic', 'custom'], ''),
       passwordSalt: /^[a-f0-9]{32}$/i.test(source.entry?.passwordSalt || '') ? source.entry.passwordSalt : '',
       passwordHash: /^[a-f0-9]{64}$/i.test(source.entry?.passwordHash || '') ? source.entry.passwordHash : '',
     },
     card: {
-      layout: oneOf(source.card?.layout, ['minimal', 'compact', 'banner', 'slideshow'], 'minimal'),
+      layout: oneOf(source.card?.layout, ['minimal', 'compact', 'banner', 'slideshow', 'stereo', 'crest', 'portrait', 'bento'], 'minimal'),
+      entrance: oneOf(source.card?.entrance, ['none', 'condense', 'sweep', 'origin', 'deal', 'ripple', 'trace', 'signal', 'circuit', 'blueprint', 'lock'], 'none'),
+      font: oneOf(source.card?.font, ['geist', 'manrope', 'urbanist', 'space', 'syne', 'outfit', 'jakarta', 'sora', 'editorial', 'instrument', 'mono', 'jetbrains', 'orbitron', 'pixel', 'gothic', 'custom'], 'geist'),
+      customFontUrl: assetUrl(source.card?.customFontUrl),
+      customFontName: text(source.card?.customFontName, 60),
+      nameSize: oneOf(source.card?.nameSize, ['sm', 'md', 'lg', 'xl'], 'md'),
+      bioStyle: oneOf(source.card?.bioStyle, ['normal', 'italic', 'quote'], 'normal'),
       alpha: clamp(source.card?.alpha, 0, 1, 0.6),
       radius: clamp(source.card?.radius, 0, 64, 24),
       width: clamp(source.card?.width, 280, 900, 440),

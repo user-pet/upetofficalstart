@@ -127,4 +127,13 @@ test('B1–B6 & M1–M12: all mobile display fixes and UI bug fixes are present 
   assert.match(storeSource, /grantFounder/);
   assert.match(settings, /settings-delete-account/);
   assert.match(settings, /grant-founder-button/);
+  assert.match(settings, /showFounderPanel\s*&&\s*<FounderAndAccount\s*\/>/);
+  assert.match(settings, /VerifyOnDiscord/);
+
+  const donateSource = readFileSync(new URL('../src/redesign/pages/Donate.jsx', import.meta.url), 'utf8');
+  const wellKnownDiscord = readFileSync(new URL('../api/well-known-discord.js', import.meta.url), 'utf8');
+  const effectsTab = readFileSync(new URL('../src/redesign/pages/dashboard/editor/EffectsTab.jsx', import.meta.url), 'utf8');
+  assert.match(donateSource, /Currently Available/);
+  assert.match(wellKnownDiscord, /normalizeDiscordDomainCode/);
+  assert.match(effectsTab, /CURSOR_FX_LIST/);
 });

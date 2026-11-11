@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, Loader2 } from 'lucide-react';
+import { Check, Eye, Hash, Loader2, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useStore } from '../lib/store';
 import { subscribePublicRedesign } from '../lib/firebaseStore';
 import { ProfileScene, ProfileCard } from '../components/ProfileCard';
 import EntryGate from '../components/EntryGate';
 import { Logo } from '../components/Logo';
+import { buildCursorCssValue } from '../lib/catalog';
 
 export default function ProfilePage() {
   const { username = '' } = useParams();
@@ -74,7 +76,11 @@ export default function ProfilePage() {
     return undefined;
   }, [profile, entered]);
 
-  const cursorSrc = profile?.media.cursor?.src;
+  const cursorCss = buildCursorCssValue(
+    profile?.effects?.cursorPreset,
+    profile?.effects?.cursorColor || profile?.card?.accent,
+    profile?.media.cursor?.src
+  );
 
   if (loading) return <div className="grid min-h-screen place-items-center"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>;
   if (!profile) return (
@@ -115,10 +121,10 @@ export default function ProfilePage() {
     : profile;
 
   return (
-    <div className={`fixed inset-x-0 top-0 z-0 h-[100dvh] ${cursorSrc ? 'upet-custom-cursor' : ''}`} data-testid="profile-page" onMouseMove={onMove} onMouseLeave={() => setTilt({ x: 0, y: 0 })} style={cursorSrc ? { '--upet-custom-cursor': `url("${cursorSrc.replace(/["'()\\\r\n]/g, '')}") 16 16, auto` } : undefined}>
+    <div className={`fixed inset-x-0 top-0 z-0 h-[100dvh] ${cursorCss ? 'upet-custom-cursor' : ''}`} data-testid="profile-page" onMouseMove={onMove} onMouseLeave={() => setTilt({ x: 0, y: 0 })} style={cursorCss ? { '--upet-custom-cursor': cursorCss } : undefined}>
       {entered && profile.card.layout === 'slideshow' ? <ProfileScene p={profile} fitDesktop className="h-full w-full" /> : <ProfileScene p={sceneProfile} scrollable={entered} fitDesktop={entered} className="h-full w-full">
         {!entered ? (
-          <EntryGate key={normalized} entry={profile.entry} accent={profile.card.accent} onEnter={() => setEntered(true)} />
+          <EntryGate key={normalized} entry={profile.entry} accent={profile.card.accent} cardFont={profile.card.font} customFontUrl={profile.card.customFontUrl} onEnter={() => setEntered(true)} />
         ) : (
           <motion.div initial={{ opacity: 0, y: 30, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.6 }} className="w-full" style={{ perspective: 1000 }}>
             <div style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`, transition: 'transform .15s ease-out' }}>
@@ -127,8 +133,29 @@ export default function ProfilePage() {
           </motion.div>
         )}
       </ProfileScene>}
-      <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-20 flex items-center gap-1.5 text-xs text-white/60"><Eye className="h-3.5 w-3.5" />{views ?? db.users[normalized]?.profile.views ?? 0}</div>
-      <Link to="/" className="absolute bottom-[max(.75rem,env(safe-area-inset-bottom))] right-4 z-20 text-white/70"><Logo className="scale-75" /></Link>
+      <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 z-20 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard?.writeText(window.location.href);
+            toast.success('Profile link copied');
+          }}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-[#08080c]/75 text-white/80 backdrop-blur-md transition-colors hover:border-white/25 hover:text-white"
+          title="Share profile link"
+        >
+          <Share2 className="h-3.5 w-3.5" />
+        </button>
+        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[#08080c]/75 px-3 py-1.5 font-mono text-[11px] text-white/80 backdrop-blur-md">
+          <Hash className="h-3 w-3 text-white/55" />
+          <span>UID 1</span>
+          <span className="text-white/25">·</span>
+          <Eye className="h-3.5 w-3.5 text-white/60" />
+          <span>{(views ?? db.users[normalized]?.profile.views ?? 0).toLocaleString()}</span>
+          <span className="text-white/25">·</span>
+          <span className="text-white/60">@{profile.username}</span>
+        </div>
+      </div>
+      <Link to="/" className="absolute bottom-[max(.75rem,env(safe-area-inset-bottom))] right-4 z-20 rounded-full border border-white/10 bg-[#08080c]/75 px-2.5 py-1 text-white/75 backdrop-blur-md transition-colors hover:border-white/25 hover:text-white"><Logo className="scale-75" /></Link>
     </div>
   );
 }

@@ -24,7 +24,7 @@ import { defaultProfile } from './profileModel.js';
 import { RATE_LIMITS } from '../../shared/rateLimits.js';
 
 export const ADMIN = { username: '', password: '' };
-export const RESERVED = ['admin', 'explore', 'marketplace', 'legal', 'login', 'dashboard', 'business', 'business-verification', 'biz', 'api', 'settings', 'help', 'support', 'user', 'pet', 'claim', 'shop-auth', 'welcome', 'create-account', 'assets'];
+export const RESERVED = ['admin', 'explore', 'marketplace', 'legal', 'login', 'dashboard', 'business', 'business-verification', 'biz', 'api', 'settings', 'help', 'support', 'user', 'pet', 'claim', 'shop-auth', 'welcome', 'create-account', 'assets', 'donate', '.well-known'];
 
 const Ctx = createContext(null);
 
@@ -135,7 +135,8 @@ function readLocalDevSession() {
 function buildLocalDevUser(sessionInput, initialProfile = null) {
   const username = String(sessionInput?.username || '').trim().toLowerCase();
   const email = String(sessionInput?.email || `${username}@user.pet`).trim().toLowerCase();
-  const role = sessionInput?.role === 'member' ? 'member' : 'founder';
+  const approvedOwner = isApprovedFounder({ uid: sessionInput?.uid || `local-user-${username}`, email, username, role: sessionInput?.role, isLocalDev: true });
+  const role = approvedOwner ? 'founder' : 'member';
   let profile = initialProfile || defaultProfile(username);
   try {
     const rawProfile = window.localStorage.getItem(`${LOCAL_DEV_PROFILE_KEY}_${username}`) || window.localStorage.getItem(LOCAL_DEV_PROFILE_KEY);
@@ -176,7 +177,7 @@ function friendlyAuthError(error) {
     'auth/requires-recent-login': 'Sign out, sign back in, then try that again.',
     'auth/weak-password': 'Use a password with at least six characters.',
     'auth/email-already-in-use': 'An account already exists for this email. Log in instead.',
-    'auth/unauthorized-domain': 'Add "localhost" to Firebase Console -> Authentication -> Settings -> Authorized domains for upet-c480b, or sign in with your Email & Password.',
+    'auth/unauthorized-domain': 'This domain is not authorized for Google sign-in. For local development, open http://lvh.me:8080/login (or run start-dev-server.bat); for other domains, add the domain in Firebase Console -> Authentication -> Settings -> Authorized domains.',
     'auth/popup-blocked': 'Your browser blocked the Google sign-in popup. Allow popups for localhost and try again.',
     'auth/popup-closed-by-user': 'Google sign-in popup was closed before finishing.',
   };
@@ -250,7 +251,14 @@ export function StoreProvider({ children }) {
         return null;
       }
       let profile = await getEditableRedesign(authUser, account.username);
-      const role = (isApprovedFounder(authUser) || isLocalDevAllowed()) ? 'founder' : 'member';
+      const isOwner = isApprovedFounder(authUser) || isApprovedFounder({
+        uid: authUser.uid,
+        email: authUser.email,
+        emailVerified: true,
+        username: account.username,
+        role: account.role,
+      });
+      const role = isOwner ? 'founder' : 'member';
       if (role === 'founder') {
         const mergedBadges = [...new Set([...(profile.badges || []), ...FOUNDER_BADGES])];
         profile = {
@@ -389,7 +397,7 @@ export function StoreProvider({ children }) {
         }
         return;
       }
-      setSiteRole(isLocalDevAllowed() ? 'founder' : access.role);
+      setSiteRole(access.role);
       setFirebaseUser(authUser);
       try {
         await loadAccount(authUser);
@@ -514,7 +522,7 @@ export function StoreProvider({ children }) {
         await signOut(auth);
         return { ok: false, error: 'This account has no active Upet access invitation.' };
       }
-      setSiteRole(isLocalDevAllowed() ? 'founder' : access.role);
+      setSiteRole(access.role);
       setFirebaseUser(credential.user);
       const loaded = await loadAccount(credential.user);
       return { ok: true, needsClaim: !loaded };
@@ -537,7 +545,7 @@ export function StoreProvider({ children }) {
         await signOut(auth);
         return { ok: false, error: 'This Google account has no active Upet access invitation.' };
       }
-      setSiteRole(isLocalDevAllowed() ? 'founder' : access.role);
+      setSiteRole(access.role);
       setFirebaseUser(credential.user);
       const loaded = await loadAccount(credential.user);
       return { ok: true, needsClaim: !loaded };
@@ -737,6 +745,10 @@ export function StoreProvider({ children }) {
   }, [firebaseUser, loadAccount, refreshDirectory, switchToAccount]);
 
   const grantFounder = useCallback(() => {
+    const current = currentUserRef.current;
+    if (!current || !isApprovedFounder({ ...current, emailVerified: true })) {
+      return { ok: false, error: 'Only approved site owners can access Founder privileges.' };
+    }
     setSiteRole('founder');
     setUserState((current) => {
       if (!current) return current;

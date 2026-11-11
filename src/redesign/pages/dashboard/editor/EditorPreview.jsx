@@ -11,12 +11,12 @@ const preventPreviewNavigation = (event) => {
 
 export function PreviewFrame({ profile, view, onEnter, className = '', fitDesktop = true, fitPreview = false }) {
   return <div className={`editor-preview-frame relative isolate overflow-hidden rounded-[1.35rem] border border-white/15 bg-black shadow-2xl ${className}`} onClickCapture={preventPreviewNavigation} onAuxClickCapture={preventPreviewNavigation} data-testid="editor-preview-frame">
-    {view === 'entry' ? <ProfileScene p={profile} className="h-full w-full"><EntryGate entry={profile.entry} accent={profile.card.accent} onEnter={onEnter} /></ProfileScene> : <ProfileScene p={profile} scrollable fitDesktop={fitDesktop} fitPreview={fitPreview} className="h-full w-full" />}
+    {view === 'entry' ? <ProfileScene p={profile} className="h-full w-full"><EntryGate entry={profile.entry} accent={profile.card.accent} cardFont={profile.card.font} customFontUrl={profile.card.customFontUrl} onEnter={onEnter} /></ProfileScene> : <ProfileScene p={profile} scrollable fitDesktop={fitDesktop} fitPreview={fitPreview} className="h-full w-full" />}
   </div>;
 }
 
-const ViewSwitch = ({ view, setView }) => <div className="inline-flex rounded-full border bg-background/60 p-1" role="group" aria-label="Preview screen">
-  {[['entry', 'Entry'], ['profile', 'Profile']].map(([id, label]) => <button key={id} type="button" data-testid={`preview-view-${id}`} onClick={() => setView(id)} aria-pressed={view === id} className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${view === id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>{label}</button>)}
+const ViewSwitch = ({ view, setView }) => <div className="inline-flex rounded-full border border-white/[0.08] bg-[#08080c] p-1" role="group" aria-label="Preview screen">
+  {[['entry', 'Entry'], ['profile', 'Profile']].map(([id, label]) => <button key={id} type="button" data-testid={`preview-view-${id}`} onClick={() => setView(id)} aria-pressed={view === id} className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${view === id ? 'bg-white text-[#050507]' : 'text-zinc-400 hover:text-white'}`}>{label}</button>)}
 </div>;
 
 export default function EditorPreview({ tab }) {
@@ -32,7 +32,7 @@ export default function EditorPreview({ tab }) {
 
   const status = saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Could not save' : 'Live edits';
 
-  return <div className="order-last rounded-2xl border border-primary/15 bg-background/40 p-3 xl:fixed xl:right-8 xl:top-8 xl:z-30 xl:w-[460px] xl:border-0 xl:bg-transparent xl:p-0" data-testid="editor-preview">
+  return <div className="order-last min-w-0 rounded-2xl border border-primary/15 bg-background/40 p-3 xl:sticky xl:top-6 xl:z-20 xl:w-full xl:border-0 xl:bg-transparent xl:p-0" data-testid="editor-preview">
     <button type="button" onClick={() => setMobileOpen((open) => !open)} className="flex w-full items-center gap-3 text-left xl:hidden" aria-expanded={mobileOpen}>
       <span className="min-w-0 flex-1"><span className="block text-xs font-bold uppercase tracking-[.2em]">Live preview</span><span className="mt-1 block truncate font-mono text-[11px] text-muted-foreground">user.pet/{user.username}</span></span>
       <span role="status" className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${saveState === 'error' ? 'bg-red-500/15 text-red-400' : 'bg-primary/10 text-primary'}`}>{status}</span>

@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Play, Pause, Music2, ChevronDown, MapPin, X, Captions, SkipBack, SkipForward } from "lucide-react";
-import { Avatar, BadgeIcon, BackgroundFx, FxText, MediaLayer, OverlayFx, Tip } from "./ProfileBits";
+import { Play, Pause, Music2, ChevronDown, MapPin, X, Captions, SkipBack, SkipForward, ArrowUpRight, CheckCircle2, Eye, Hash } from "lucide-react";
+import { Avatar, BadgeIcon, BackgroundFx, CursorFx, FxText, MediaLayer, OverlayFx, Tip } from "./ProfileBits";
 import { DiscordWidget, TikTokWidget, hexA } from "./Widgets";
 import PlatformIcon from "./PlatformIcon";
-import { BRAND, BADGES } from "../lib/catalog";
+import { BRAND, BADGES, CARD_FONT_MAP, buildCursorCssValue, fontStyle } from "../lib/catalog";
 import { activeLyricIndex, waitingForLyric } from "../lib/lyrics";
 import StreamingPlayer from "./StreamingPlayer";
 import ProfileFloatingLayer from "./ProfileFloatingLayer";
@@ -203,15 +203,35 @@ const LinkIcon = ({ l, ls, accent }) => {
   return <PlatformIcon platform={l.platform} color={color} size={ls.size} style={style} />;
 };
 
+const computeProfileUid = (username = "") => {
+  const clean = String(username || "").toLowerCase();
+  if (clean === "dome" || clean === "lamp") return 1;
+  if (clean === "bee") return 2;
+  let hash = 7;
+  for (let i = 0; i < clean.length; i += 1) {
+    hash = (hash * 31 + clean.charCodeAt(i)) % 900;
+  }
+  return Math.max(3, hash + 3);
+};
+
 const Links = ({ p, compact }) => {
   const ls = p.linkStyle;
+  const accent = p.card.accent || "#6cc4ff";
   if (!p.links.length) return null;
   if (compact || ls.mode === "icons") return (
     <div className="flex flex-wrap justify-center gap-2">
       {p.links.map((l) => (
         <Tip key={l.id} cfg={p.tooltips} label={l.label}>
-          <a href={l.url} target="_blank" rel="noreferrer" data-testid={`profile-link-${l.id}`} data-analytics-feature="Profile links" className="grid place-items-center bg-white/10 transition-transform hover:-translate-y-0.5 hover:bg-white/20" style={{ width: ls.size + 20, height: ls.size + 20, borderRadius: ls.radius }}>
-            <LinkIcon l={l} ls={ls} accent={p.card.accent} />
+          <a
+            href={l.url}
+            target="_blank"
+            rel="noreferrer"
+            data-testid={`profile-link-${l.id}`}
+            data-analytics-feature="Profile links"
+            className="grid place-items-center border border-white/[0.08] bg-white/[0.05] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--link-accent)] hover:bg-white/[0.11] hover:shadow-[0_0_20px_-6px_var(--link-accent)]"
+            style={{ width: ls.size + 22, height: ls.size + 22, borderRadius: ls.radius, "--link-accent": accent }}
+          >
+            <LinkIcon l={l} ls={ls} accent={accent} />
           </a>
         </Tip>
       ))}
@@ -220,9 +240,19 @@ const Links = ({ p, compact }) => {
   return (
     <div className="space-y-2">
       {p.links.map((l) => (
-        <a key={l.id} href={l.url} target="_blank" rel="noreferrer" data-testid={`profile-link-${l.id}`} data-analytics-feature="Profile links" className="flex items-center gap-3 border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white transition-colors hover:bg-white/10" style={{ borderRadius: ls.radius }}>
-          <LinkIcon l={l} ls={ls} accent={p.card.accent} />
-          <span className="flex-1 truncate text-left">{l.label || l.url}</span>
+        <a
+          key={l.id}
+          href={l.url}
+          target="_blank"
+          rel="noreferrer"
+          data-testid={`profile-link-${l.id}`}
+          data-analytics-feature="Profile links"
+          className="group relative flex items-center gap-3 overflow-hidden border border-white/[0.08] bg-white/[0.035] px-3.5 py-2.5 text-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--link-accent)] hover:bg-white/[0.08] hover:shadow-[0_0_24px_-8px_var(--link-accent)]"
+          style={{ borderRadius: ls.radius, "--link-accent": accent }}
+        >
+          <LinkIcon l={l} ls={ls} accent={accent} />
+          <span className="min-w-0 flex-1 truncate text-left font-medium tracking-tight">{l.label || l.url}</span>
+          <ArrowUpRight className="h-3.5 w-3.5 shrink-0 opacity-35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-90" style={{ color: accent }} />
         </a>
       ))}
     </div>
@@ -236,20 +266,67 @@ const Widgets = ({ widgets }) => (
   </>
 );
 
+const NAME_SIZE_CLASSES = {
+  sm: "text-xl sm:text-2xl",
+  md: "text-2xl sm:text-[1.65rem]",
+  lg: "text-3xl sm:text-[2rem]",
+  xl: "text-4xl sm:text-[2.35rem]",
+};
+
 const Identity = ({ p, align = "center", avatarSize = 104 }) => {
   const shown = (p.shownBadges || []).filter((b) => p.badges.includes(b));
+  const headingFont = fontStyle(p.card?.font, p.card?.customFontUrl);
+  const domainVerified = Boolean(p.integrations?.discordDomain?.code);
+  const nameSizeCls = NAME_SIZE_CLASSES[p.card?.nameSize] || NAME_SIZE_CLASSES.md;
+  const bioStyle = p.card?.bioStyle || "normal";
   return (
-    <div className={`flex flex-col gap-1 ${align === "center" ? "items-center text-center" : "items-start text-left"}`}>
-      <Avatar media={p.media.avatar} name={p.username} size={avatarSize} decoration={p.effects.decoration} hue={p.effects.decoHue} decoSize={p.effects.decoSize} className="mb-2" />
-      <h2 className="font-display text-2xl font-extrabold" style={{ color: p.effects.textColor || p.card.textColor }}><FxText fx={p.effects.text} text={p.displayName || p.username} style={{ color: p.effects.textColor || p.card.textColor, '--fx-color': p.effects.textColor || p.card.textColor }} /></h2>
-      <div className="text-sm opacity-60" style={{ color: p.card.textColor }}>@{p.username}</div>
+    <div className={`flex flex-col gap-1.5 ${align === "center" ? "items-center text-center" : "items-start text-left"}`}>
+      {avatarSize > 0 && (
+        <Avatar media={p.media.avatar} name={p.username} size={avatarSize} decoration={p.effects.decoration} hue={p.effects.decoHue} decoSize={p.effects.decoSize} className="mb-1.5" />
+      )}
+      <h2
+        className={`${nameSizeCls} font-bold tracking-tight`}
+        style={{
+          color: p.effects.textColor || p.card.textColor,
+          fontFamily: headingFont,
+        }}
+      >
+        <FxText fx={p.effects.text} text={p.displayName || p.username} style={{ color: p.effects.textColor || p.card.textColor, "--fx-color": p.effects.textColor || p.card.textColor }} />
+      </h2>
+      <div className={`flex flex-wrap items-center gap-1.5 ${align === "center" ? "justify-center" : "justify-start"}`}>
+        <span className="font-mono text-xs tracking-tight opacity-65" style={{ color: p.card.textColor }}>
+          @{p.username}
+        </span>
+        {p.alias && (
+          <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[11px] font-medium opacity-75" style={{ color: p.card.textColor }}>
+            {p.alias}
+          </span>
+        )}
+        {domainVerified && (
+          <span
+            data-testid="profile-discord-domain-verified"
+            title={`Verified Discord domain: ${p.username}.user.pet`}
+            className="inline-flex items-center gap-1 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-0.5 font-mono text-[10px] font-medium text-emerald-300"
+          >
+            <CheckCircle2 className="h-2.5 w-2.5" />
+            {p.username}.user.pet
+          </span>
+        )}
+      </div>
       {shown.length > 0 && (
-        <div className={`mt-1 flex max-w-full flex-wrap gap-1 ${align === "center" ? "justify-center" : "justify-start"}`} data-testid="profile-badges">
+        <div className={`mt-1 flex max-w-full flex-wrap gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.035] px-2.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ${align === "center" ? "justify-center" : "justify-start"}`} data-testid="profile-badges">
           {shown.map((b) => <Tip key={b} cfg={p.tooltips} label={(BADGES.find((x) => x.id === b) || {}).label}><BadgeIcon id={b} cfg={p.badgeStyle} /></Tip>)}
         </div>
       )}
-      {p.bio && <p className="mt-2 max-w-xs text-sm" style={{ color: hexA(p.card.textColor, 0.8) }}>{p.bio}</p>}
-      {p.location && <div className="mt-1 flex items-center gap-1 text-xs opacity-60" style={{ color: p.card.textColor }}><MapPin className="h-3 w-3" />{p.location}</div>}
+      {p.bio && (
+        <p
+          className={`mt-1.5 max-w-sm text-sm leading-relaxed ${bioStyle === "italic" || bioStyle === "quote" ? "italic" : ""}`}
+          style={{ color: hexA(p.card.textColor, 0.85) }}
+        >
+          {bioStyle === "quote" ? `“${p.bio}”` : p.bio}
+        </p>
+      )}
+      {p.location && <div className="mt-0.5 flex items-center gap-1 font-mono text-[11px] opacity-55" style={{ color: p.card.textColor }}><MapPin className="h-3 w-3" />{p.location}</div>}
     </div>
   );
 };
@@ -261,15 +338,206 @@ const shellStyle = (c, scale = 1) => ({
   backdropFilter: `blur(${c.blur}px)`,
   WebkitBackdropFilter: `blur(${c.blur}px)`,
   border: `1px solid ${hexA(c.accent, c.borderAlpha)}`,
-  boxShadow: `0 30px 80px -30px ${hexA(c.accent, 0.5)}`,
+  boxShadow: `0 24px 64px -28px rgba(0,0,0,0.72), 0 0 0 1px rgba(255,255,255,0.03) inset`,
+  fontFamily: fontStyle(c.font, c.customFontUrl),
 });
 
-const Shell = ({ p, children, testid = "profile-card" }) => (
-  <div data-testid={testid} className="relative mx-auto w-full p-6" style={shellStyle(p.card)}>
-    <div className="relative z-10">{children}</div>
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ borderRadius: p.card.radius }}><OverlayFx kind={p.effects.overlay} /></div>
-  </div>
-);
+const CardFrameFx = ({ entrance, radius = 28, accent = "#6cc4ff" }) => {
+  if (!entrance || entrance === "none") return null;
+  const r = Math.max(0, Number(radius) || 0);
+  const maskStyle = {
+    borderRadius: r,
+    padding: "2px",
+    WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+    WebkitMaskComposite: "xor",
+    maskComposite: "exclude",
+  };
+
+  if (entrance === "sweep") {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" style={{ borderRadius: r }}>
+        <div
+          className="absolute -inset-y-12 w-1/2"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${hexA(accent, 0.28)}, rgba(244, 114, 182, 0.32), rgba(255,255,255,0.45), transparent)`,
+            animation: "upet-card-sweep-beam 3.6s ease-in-out infinite",
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (entrance === "ripple") {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-0" style={{ borderRadius: r }}>
+        <div
+          className="absolute -inset-1"
+          style={{
+            borderRadius: r + 4,
+            border: `1.5px solid ${hexA(accent, 0.65)}`,
+            boxShadow: `0 0 24px ${hexA(accent, 0.35)}, inset 0 0 18px rgba(244, 114, 182, 0.25)`,
+            animation: "upet-card-ripple-wave 2.6s ease-out infinite",
+          }}
+        />
+        <div
+          className="absolute -inset-2"
+          style={{
+            borderRadius: r + 8,
+            border: "1px solid rgba(244, 114, 182, 0.55)",
+            animation: "upet-card-ripple-wave 2.6s ease-out 1.1s infinite",
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (entrance === "trace") {
+    return (
+      <div
+        className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+        style={{
+          ...maskStyle,
+          "--upet-entrance-c1": accent || "#38bdf8",
+          "--upet-entrance-c2": "#ec4899",
+        }}
+      >
+        <div className="upet-frame-trace-spinner" />
+      </div>
+    );
+  }
+
+  if (entrance === "circuit") {
+    return (
+      <>
+        <div
+          className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+          style={{
+            ...maskStyle,
+            "--upet-entrance-c1": accent || "#22d3ee",
+            "--upet-entrance-c2": "#f472b6",
+          }}
+        >
+          <div className="upet-frame-circuit-spinner" />
+        </div>
+        <div className="pointer-events-none absolute inset-2 z-20" style={{ borderRadius: Math.max(0, r - 6) }}>
+          <span className="absolute left-1.5 top-1.5 h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_10px_#22d3ee]" />
+          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-pink-400 shadow-[0_0_10px_#f472b6]" />
+          <span className="absolute bottom-1.5 left-1.5 h-2 w-2 rounded-full bg-pink-400 shadow-[0_0_10px_#f472b6]" />
+          <span className="absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_10px_#22d3ee]" />
+        </div>
+      </>
+    );
+  }
+
+  if (entrance === "signal") {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-20" style={{ borderRadius: r }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            borderRadius: r,
+            border: "1.5px solid rgba(56, 189, 248, 0.65)",
+            transform: "translate(-2px, -1px)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            borderRadius: r,
+            border: "1.5px solid rgba(236, 72, 153, 0.65)",
+            transform: "translate(2px, 1px)",
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (entrance === "blueprint") {
+    return (
+      <div className="pointer-events-none absolute -inset-2.5 z-20">
+        {/* Drafting guide lines */}
+        <div className="absolute inset-x-0 top-2.5 h-px bg-gradient-to-r from-transparent via-sky-400/70 to-transparent" />
+        <div className="absolute inset-x-0 bottom-2.5 h-px bg-gradient-to-r from-transparent via-pink-400/70 to-transparent" />
+        <div className="absolute inset-y-0 left-2.5 w-px bg-gradient-to-b from-transparent via-sky-400/70 to-transparent" />
+        <div className="absolute inset-y-0 right-2.5 w-px bg-gradient-to-b from-transparent via-pink-400/70 to-transparent" />
+        {/* Corner crosshairs */}
+        <span className="absolute left-1 top-1 font-mono text-[11px] font-bold leading-none text-sky-300">+</span>
+        <span className="absolute right-1 top-1 font-mono text-[11px] font-bold leading-none text-pink-300">+</span>
+        <span className="absolute bottom-1 left-1 font-mono text-[11px] font-bold leading-none text-pink-300">+</span>
+        <span className="absolute bottom-1 right-1 font-mono text-[11px] font-bold leading-none text-sky-300">+</span>
+        {/* Scanning laser line */}
+        <div
+          className="absolute inset-x-3 h-px bg-gradient-to-r from-transparent via-sky-300 to-transparent shadow-[0_0_12px_#38bdf8]"
+          style={{ animation: "upet-blueprint-scan 4.2s ease-in-out infinite" }}
+        />
+      </div>
+    );
+  }
+
+  if (entrance === "lock") {
+    return (
+      <div
+        className="pointer-events-none absolute -inset-1.5 z-20"
+        style={{ animation: "upet-lock-pulse 2.4s ease-in-out infinite" }}
+      >
+        <div className="absolute left-0 top-0 h-6 w-6 rounded-tl-lg border-l-2 border-t-2 border-sky-400 shadow-[-2px_-2px_12px_rgba(56,189,248,0.55)]" />
+        <div className="absolute right-0 top-0 h-6 w-6 rounded-tr-lg border-r-2 border-t-2 border-pink-400 shadow-[2px_-2px_12px_rgba(244,114,182,0.55)]" />
+        <div className="absolute bottom-0 left-0 h-6 w-6 rounded-bl-lg border-b-2 border-l-2 border-pink-400 shadow-[-2px_2px_12px_rgba(244,114,182,0.55)]" />
+        <div className="absolute bottom-0 right-0 h-6 w-6 rounded-br-lg border-b-2 border-r-2 border-sky-400 shadow-[2px_2px_12px_rgba(56,189,248,0.55)]" />
+      </div>
+    );
+  }
+
+  return null;
+};
+
+const Shell = ({ p, children, testid = "profile-card" }) => {
+  const uidNum = computeProfileUid(p.username);
+  const entrance = p.card?.entrance || "none";
+  const entranceCls = entrance && entrance !== "none" ? `upet-card-entrance-${entrance}` : "";
+  const [tiltTransform, setTiltTransform] = useState("");
+
+  const handleMouseMove = (e) => {
+    if (!p.card?.tilt) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / Math.max(1, rect.width) - 0.5;
+    const y = (e.clientY - rect.top) / Math.max(1, rect.height) - 0.5;
+    setTiltTransform(`perspective(1000px) rotateX(${(-y * 9).toFixed(2)}deg) rotateY(${(x * 9).toFixed(2)}deg) scale3d(1.01, 1.01, 1.01)`);
+  };
+
+  const handleMouseLeave = () => {
+    if (tiltTransform) setTiltTransform("");
+  };
+
+  return (
+    <div
+      data-testid={testid}
+      data-card-entrance={entrance}
+      data-card-layout={p.card?.layout || "minimal"}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={`relative mx-auto w-full p-6 transition-transform duration-200 ease-out ${entranceCls}`}
+      style={{
+        ...shellStyle(p.card),
+        ...(tiltTransform ? { transform: tiltTransform } : {}),
+      }}
+    >
+      <CardFrameFx entrance={entrance} radius={p.card.radius} accent={p.card.accent} />
+      <div className="pointer-events-none absolute inset-x-4 top-3.5 z-20 flex items-center justify-between font-mono text-[10px] text-white/70">
+        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/45 px-2.5 py-0.5 backdrop-blur-md">
+          <Hash className="h-2.5 w-2.5" style={{ color: p.card.accent }} />
+          <span>UID {uidNum}</span>
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/45 px-2.5 py-0.5 backdrop-blur-md">
+          <Eye className="h-2.5 w-2.5" style={{ color: p.card.accent }} />
+          <span>{Number(p.views || 0).toLocaleString()}</span>
+        </span>
+      </div>
+      <div className="relative z-10">{children}</div>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ borderRadius: p.card.radius }}><OverlayFx kind={p.effects.overlay} /></div>
+    </div>
+  );
+};
 
 const Body = ({ p }) => {
   const { layout, accent } = p.card;
@@ -280,6 +548,76 @@ const Body = ({ p }) => {
       <Links p={p} compact />
       <AudioBar audio={p.audio} accent={accent} cardWidth={p.card.width} />
       <Widgets widgets={p.widgets} />
+    </div>
+  );
+  if (layout === "stereo") return (
+    <div className="space-y-4 pt-3">
+      <div className="grid grid-cols-1 items-center gap-5 sm:grid-cols-[0.95fr_1.15fr]">
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4">
+          <Identity p={p} align="center" avatarSize={88} />
+        </div>
+        <div className="space-y-3">
+          <Links p={p} />
+          <AudioBar audio={p.audio} accent={accent} cardWidth={p.card.width} />
+        </div>
+      </div>
+      <Widgets widgets={p.widgets} />
+    </div>
+  );
+  if (layout === "crest") return (
+    <div className="space-y-4 pt-4">
+      <div className="-mt-12 flex flex-col items-center">
+        <div className="rounded-full p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.5)]" style={{ background: `linear-gradient(135deg, ${hexA(accent, 0.65)}, rgba(244,114,182,0.55))` }}>
+          <Avatar media={p.media.avatar} name={p.username} size={96} decoration={p.effects.decoration} hue={p.effects.decoHue} decoSize={p.effects.decoSize} />
+        </div>
+      </div>
+      <Identity p={{ ...p, media: { ...p.media, avatar: { src: "", type: "" } } }} align="center" avatarSize={0} />
+      <Links p={p} compact={p.linkStyle.mode !== "list"} />
+      <AudioBar audio={p.audio} accent={accent} cardWidth={p.card.width} />
+      <Widgets widgets={p.widgets} />
+    </div>
+  );
+  if (layout === "portrait") {
+    const portraitMedia = p.media.banner?.src ? p.media.banner : p.media.avatar;
+    return (
+      <div className="space-y-4 pt-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-[0.88fr_1.22fr]">
+          <div className="relative min-h-[210px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-sky-400/30 via-fuchsia-500/25 to-pink-500/30">
+            {portraitMedia?.src ? (
+              <MediaLayer media={portraitMedia} className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full min-h-[210px] items-center justify-center p-4">
+                <Avatar media={p.media.avatar} name={p.username} size={92} decoration={p.effects.decoration} hue={p.effects.decoHue} decoSize={p.effects.decoSize} />
+              </div>
+            )}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent" />
+          </div>
+          <div className=" flex flex-col justify-center space-y-3.5">
+            <Identity p={p} align="left" avatarSize={64} />
+            <Links p={p} />
+          </div>
+        </div>
+        <AudioBar audio={p.audio} accent={accent} cardWidth={p.card.width} />
+        <Widgets widgets={p.widgets} />
+      </div>
+    );
+  }
+  if (layout === "bento") return (
+    <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2">
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:col-span-2">
+        <Identity p={p} align="left" avatarSize={74} />
+      </div>
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3.5 sm:col-span-2">
+        <Links p={p} />
+      </div>
+      {(p.audio.src || p.audio.embedUrl) && (
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3 sm:col-span-2">
+          <AudioBar audio={p.audio} accent={accent} cardWidth={p.card.width} />
+        </div>
+      )}
+      <div className="sm:col-span-2">
+        <Widgets widgets={p.widgets} />
+      </div>
     </div>
   );
   return (
@@ -357,11 +695,25 @@ export const ProfileScene = ({ p, className = "", children, scrollable = false, 
   const slideshow = p.card.layout === "slideshow";
   const content = children || (slideshow ? <SlideshowPage p={p} /> : <ProfileCard p={p} />);
   const bg = p.media.background;
+  const cursorCss = buildCursorCssValue(p.effects?.cursorPreset, p.effects?.cursorColor || p.card?.accent, p.media?.cursor?.src);
+  const cleanCustomFontUrl = String(p.card?.customFontUrl || "").replace(/["'()\\\r\n]/g, "");
   return (
-    <div data-profile-scene className={`upet-profile-scene relative overflow-hidden ${className}`} style={{ background: p.card.bgColor }}>
+    <div
+      data-profile-scene
+      className={`upet-profile-scene relative overflow-hidden ${cursorCss ? "upet-custom-cursor" : ""} ${className}`}
+      style={{
+        background: p.card.bgColor,
+        fontFamily: CARD_FONT_MAP[p.card?.font] || CARD_FONT_MAP.geist,
+        ...(cursorCss ? { "--upet-custom-cursor": cursorCss } : {}),
+      }}
+    >
+      {cleanCustomFontUrl && (
+        <style>{`@font-face { font-family: 'UpetCustomFont'; src: url("${cleanCustomFontUrl}"); font-display: swap; }`}</style>
+      )}
       {bg.src && <MediaLayer media={bg} className="absolute inset-[-20px] h-[calc(100%+40px)] w-[calc(100%+40px)]" style={{ backgroundSize: "cover" }} />}
-      {!bg.src && <div className="absolute inset-0" style={{ background: `radial-gradient(60% 50% at 50% 10%, ${hexA(p.card.accent, 0.35)}, transparent 70%)` }} />}
+      {!bg.src && <div className="absolute inset-0" style={{ background: `radial-gradient(60% 50% at 50% 10%, ${hexA(p.card.accent, 0.28)}, transparent 70%)` }} />}
       <BackgroundFx kind={p.effects.background} amount={p.effects.backgroundAmount} color={p.effects.backgroundColor} />
+      <CursorFx kind={p.effects?.cursor} color={p.effects?.cursorColor || p.card.accent} />
       {slideshow && !children ? <div className="absolute inset-0 z-10">{content}</div> : scrollable ? <div data-testid="profile-scroll-region" className={`scroll-thin relative z-10 h-full w-full overflow-x-hidden overscroll-y-contain ${fitPreview ? 'overflow-y-hidden' : `overflow-y-auto ${fitDesktop ? 'md:overflow-y-hidden' : ''}`}`} style={{ WebkitOverflowScrolling: "touch", touchAction: fitPreview ? "none" : "pan-y" }}><div className={`flex min-h-full w-full items-start justify-center ${fitPreview ? 'p-3' : 'px-4 pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-8'}`}><DesktopFit enabled={fitDesktop || fitPreview} allViewports={fitPreview} inset={fitPreview ? 24 : 96}>{content}</DesktopFit></div></div> : <div className="relative z-10 flex h-full w-full items-center justify-center p-6">{content}</div>}
       <div data-profile-overlay-root className="pointer-events-none absolute inset-0 z-20 overflow-hidden" />
     </div>

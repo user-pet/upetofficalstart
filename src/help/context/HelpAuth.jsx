@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { GoogleAuthProvider, onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth';
 import { auth, firebaseConfigured, persistAuthLocally } from '../../app/firebase';
+import { isApprovedFounder } from '../../app/FounderGate.jsx';
 import { ensureOwnerMembership, subscribeStaffMembership } from '../lib/helpStore';
 import { getSiteAccess } from '../../redesign/lib/siteAccess.js';
 
@@ -57,7 +58,7 @@ export function HelpAuthProvider({ children }) {
         if (membership) {
           setStaff(membership);
           stopStaff = subscribeStaffMembership(next.uid, setStaff);
-        } else if (import.meta.env?.DEV) {
+        } else if (isApprovedFounder(next)) {
           setStaff({ active: true, role: 'owner', department: 'operations', jobTitle: 'Founder', permissions: ['tickets', 'articles', 'legal', 'reports', 'accounts', 'staff'] });
         } else {
           stopStaff = subscribeStaffMembership(next.uid, setStaff);

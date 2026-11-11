@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from "
 import { Toaster } from "sonner";
 import { StoreProvider, useStore } from "./lib/store";
 import { WaveBackground } from "./components/WaveBackground";
+import { SiteCursor } from "./components/SiteCursor";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import Home from "./pages/Home";
@@ -18,6 +19,7 @@ const ComingSoon = lazyWithRetry(() => import('./pages/ComingSoon'), 'coming-soo
 const Login = lazyWithRetry(() => import('./pages/Login'), 'login');
 const ClaimUsername = lazyWithRetry(() => import('./pages/ClaimUsername'), 'claim');
 const Privacy = lazyWithRetry(() => import('./pages/Privacy'), 'privacy');
+const Donate = lazyWithRetry(() => import('./pages/Donate'), 'donate');
 
 const dashboardImports = {
   overview: () => import('./pages/dashboard/Overview'),
@@ -30,7 +32,7 @@ const dashboardImports = {
   modview: () => import('./pages/dashboard/Modview'),
 };
 
-const NAMES = { "": "Home", explore: "Explore", legal: "Legal", login: "Login", privacy: "Privacy", terms: "Terms", support: "Support", status: "Status", changelog: "Changelog", 'business-verification': 'Business verification' };
+const NAMES = { "": "Home", explore: "Explore", donate: "Donate", legal: "Legal", login: "Login", privacy: "Privacy", terms: "Terms", support: "Support", status: "Status", changelog: "Changelog", 'business-verification': 'Business verification' };
 
 function resetWindowScroll() {
   window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -118,6 +120,7 @@ function App() {
   return (
     <StoreProvider>
       <div className="App">
+        <SiteCursor />
         <WaveBackground />
         <BrowserRouter>
           <TitleSync />
@@ -126,6 +129,7 @@ function App() {
           <RouteErrorBoundary><Suspense fallback={<RouteLoading />}><Routes>
             <Route path="/" element={<Shell><Home /></Shell>} />
             <Route path="/explore" element={<Shell><Explore /></Shell>} />
+            <Route path="/donate" element={<Shell><Donate /></Shell>} />
             <Route path="/marketplace" element={<Navigate to="/explore" replace />} />
             <Route path="/business-verification" element={<Navigate to="/" replace />} />
             <Route path="/legal" element={<Shell><ComingSoon name="Legal" /></Shell>} />

@@ -1,31 +1,31 @@
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Unbounded:wght@400;600;800;900&family=Onest:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&family=Orbitron:wght@500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Pixelify+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;600;700;800&family=UnifrakturMaguntia&family=Urbanist:wght@400;500;600;700;800&display=swap");
 @layer base {
   :root,
   [data-upet-theme="light"] {
     color-scheme: light;
 
-    /* Semantic colour roles. Values remain HSL channels for Tailwind compatibility. */
-    --upet-color-canvas: 208 100% 98%;
-    --upet-color-text: 214 45% 14%;
-    --upet-color-surface: 0 0% 100%;
-    --upet-color-surface-text: 214 45% 14%;
-    --upet-color-popover: 0 0% 100%;
-    --upet-color-popover-text: 214 45% 14%;
-    --upet-color-accent: 203 100% 66%;
-    --upet-color-accent-text: 214 60% 10%;
-    --upet-color-secondary: 205 100% 94%;
-    --upet-color-secondary-text: 214 45% 18%;
-    --upet-color-muted: 207 60% 94%;
-    --upet-color-muted-text: 213 18% 44%;
-    --upet-color-highlight: 199 100% 88%;
-    --upet-color-highlight-text: 214 45% 14%;
-    --upet-color-danger: 0 80% 60%;
+    /* Semantic colour roles — Aqua-to-Pink Light Mode with high-contrast dark plum/slate text. */
+    --upet-color-canvas: 330 70% 97%;
+    --upet-color-text: 256 45% 12%;
+    --upet-color-surface: 334 65% 98%;
+    --upet-color-surface-text: 256 45% 12%;
+    --upet-color-popover: 334 65% 98%;
+    --upet-color-popover-text: 256 45% 12%;
+    --upet-color-accent: 330 82% 54%;
+    --upet-color-accent-text: 0 0% 100%;
+    --upet-color-secondary: 328 50% 93%;
+    --upet-color-secondary-text: 256 42% 15%;
+    --upet-color-muted: 328 45% 93%;
+    --upet-color-muted-text: 258 28% 34%;
+    --upet-color-highlight: 330 80% 92%;
+    --upet-color-highlight-text: 256 45% 14%;
+    --upet-color-danger: 0 78% 52%;
     --upet-color-danger-text: 0 0% 100%;
-    --upet-color-line: 206 60% 87%;
-    --upet-color-control: 206 60% 87%;
-    --upet-color-focus: 203 100% 66%;
-    --upet-color-wave: 203 100% 66%;
-    --upet-color-glass: 0 0% 100%;
+    --upet-color-line: 326 38% 82%;
+    --upet-color-control: 326 38% 82%;
+    --upet-color-focus: 330 82% 54%;
+    --upet-color-wave: 326 82% 58%;
+    --upet-color-glass: 332 70% 98%;
 
     /* Compatibility aliases used by the active application. */
     --background: var(--upet-color-canvas);
@@ -50,13 +50,14 @@
     --wave: var(--upet-color-wave);
     --glass: var(--upet-color-glass);
 
-    /* Typography. */
-    --upet-font-body: "Onest", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --upet-font-display: "Unbounded", "Onest", system-ui, sans-serif;
-    --upet-font-editorial: "Instrument Serif", Georgia, serif;
-    --upet-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
-    --upet-leading-tight: 1.15;
-    --upet-leading-body: 1.65;
+    /* Intentional Human Typography Tokens (Geist + Manrope + Urbanist + Editorial Serif). */
+    --upet-font-body: "Geist", "Manrope", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --upet-font-display: "Manrope", "Geist", system-ui, sans-serif;
+    --upet-font-ui: "Urbanist", "Geist", system-ui, sans-serif;
+    --upet-font-editorial: "Playfair Display", "Instrument Serif", Georgia, serif;
+    --upet-font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+    --upet-leading-tight: 1.12;
+    --upet-leading-body: 1.6;
 
     /* Four-pixel spatial rhythm with named composition steps. */
     --upet-space-1: 0.25rem;
@@ -98,29 +99,29 @@
   .dark,
   [data-upet-theme="dark"] {
     color-scheme: dark;
-    --upet-color-canvas: 225 14% 4%;
-    --upet-color-text: 210 20% 96%;
-    --upet-color-surface: 225 12% 7%;
-    --upet-color-surface-text: 210 20% 96%;
-    --upet-color-popover: 225 12% 7%;
-    --upet-color-popover-text: 210 20% 96%;
-    --upet-color-accent: 203 100% 68%;
-    --upet-color-accent-text: 225 30% 6%;
-    --upet-color-secondary: 225 10% 11%;
-    --upet-color-secondary-text: 210 20% 96%;
-    --upet-color-muted: 225 10% 10%;
-    --upet-color-muted-text: 220 8% 58%;
-    --upet-color-highlight: 225 10% 12%;
-    --upet-color-highlight-text: 210 20% 96%;
-    --upet-color-danger: 0 70% 50%;
+    --upet-color-canvas: 222 24% 3.5%;
+    --upet-color-text: 206 30% 97%;
+    --upet-color-surface: 220 22% 6%;
+    --upet-color-surface-text: 206 30% 97%;
+    --upet-color-popover: 220 22% 6%;
+    --upet-color-popover-text: 206 30% 97%;
+    --upet-color-accent: 199 98% 68%;
+    --upet-color-accent-text: 220 45% 5%;
+    --upet-color-secondary: 218 18% 10%;
+    --upet-color-secondary-text: 206 25% 96%;
+    --upet-color-muted: 218 16% 9%;
+    --upet-color-muted-text: 214 12% 62%;
+    --upet-color-highlight: 202 35% 13%;
+    --upet-color-highlight-text: 200 100% 92%;
+    --upet-color-danger: 0 70% 52%;
     --upet-color-danger-text: 0 0% 100%;
-    --upet-color-line: 225 9% 14%;
-    --upet-color-control: 225 9% 14%;
-    --upet-color-focus: 203 100% 68%;
-    --upet-color-wave: 203 100% 68%;
-    --upet-color-glass: 225 12% 7%;
-    --upet-shadow-low: 0 12px 34px -18px hsl(225 60% 1% / 0.72);
-    --upet-shadow-panel: 0 28px 80px -34px hsl(225 60% 1% / 0.9);
+    --upet-color-line: 215 18% 15%;
+    --upet-color-control: 215 18% 15%;
+    --upet-color-focus: 199 98% 68%;
+    --upet-color-wave: 199 98% 68%;
+    --upet-color-glass: 220 22% 6%;
+    --upet-shadow-low: 0 12px 34px -18px hsl(215 65% 2% / 0.82);
+    --upet-shadow-panel: 0 28px 80px -34px hsl(215 65% 2% / 0.94);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -159,49 +160,55 @@
 }
 
 @media (pointer: fine) {
+  html, body {
+    cursor: var(--upet-site-cursor, auto);
+  }
+  a, button, [role="button"], input[type="submit"], select, summary, label[for] {
+    cursor: var(--upet-site-cursor-pointer, pointer);
+  }
   .upet-custom-cursor, .upet-custom-cursor * { cursor: var(--upet-custom-cursor) !important; }
 }
 
-@layer base {
-  * { @apply border-border; }
-  body {
-    @apply bg-background text-foreground;
-    font-family: var(--upet-font-body);
-    -webkit-font-smoothing: antialiased;
-    transition: background-color .4s ease, color .4s ease;
+  @layer base {
+    * { @apply border-border; }
+    body {
+      @apply bg-background text-foreground;
+      font-family: var(--upet-font-body);
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color .25s ease, color .25s ease;
+    }
+    button, nav, [role="tab"], label {
+      font-family: var(--upet-font-ui);
+    }
+    ::selection { background: hsl(var(--primary) / .28); }
   }
-  ::selection { background: hsl(var(--primary) / .35); }
-}
 
-.font-display { font-family: "Unbounded", sans-serif; }
-.font-mono { font-family: "JetBrains Mono", monospace; }
+.font-display {
+  font-family: var(--upet-font-display);
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+.font-mono { font-family: var(--upet-font-mono); }
+.font-editorial { font-family: var(--upet-font-editorial); }
+.font-ui { font-family: var(--upet-font-ui); }
 
 .glass {
-  background: hsl(var(--glass) / .62);
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  border: 1px solid hsl(var(--primary) / .22);
+  background: hsl(var(--glass) / .82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid hsl(var(--foreground) / .09);
 }
 
 .text-3d {
   color: hsl(var(--foreground));
-  text-shadow:
-    0 1px 0 hsl(var(--primary) / .9),
-    0 2px 0 hsl(var(--primary) / .8),
-    0 3px 0 hsl(var(--primary) / .7),
-    0 4px 0 hsl(var(--primary) / .6),
-    0 5px 0 hsl(var(--primary) / .5),
-    0 6px 1px hsl(var(--primary) / .3),
-    0 10px 24px hsl(var(--primary) / .45);
-  transform: perspective(600px) rotateX(14deg);
-  transform-origin: bottom;
+  font-family: var(--upet-font-display);
+  letter-spacing: -0.035em;
+  font-weight: 700;
 }
 .text-3d-accent {
-  background: linear-gradient(180deg, hsl(199 100% 78%), hsl(206 100% 58%));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 4px 0 hsl(208 90% 40% / .55)) drop-shadow(0 12px 18px hsl(203 100% 60% / .45));
+  color: hsl(var(--primary));
 }
 
 .wave-line { animation: wave-move linear infinite; }
@@ -261,13 +268,14 @@
 
 .bg-fx-aurora {
   background:
-    radial-gradient(ellipse at 28% 44%, color-mix(in srgb, currentColor 78%, transparent), transparent 28%),
-    radial-gradient(ellipse at 67% 38%, color-mix(in srgb, currentColor 52%, #536dfe), transparent 34%),
-    radial-gradient(ellipse at 55% 64%, color-mix(in srgb, currentColor 48%, #dd43ff), transparent 31%);
-  filter: blur(18px) saturate(1.35);
-  animation: bg-aurora 8s ease-in-out infinite alternate;
+    radial-gradient(ellipse at 28% 44%, color-mix(in srgb, currentColor 65%, transparent), transparent 45%),
+    radial-gradient(ellipse at 67% 38%, color-mix(in srgb, currentColor 45%, #38bdf8), transparent 50%),
+    radial-gradient(ellipse at 55% 64%, color-mix(in srgb, currentColor 38%, #818cf8), transparent 48%);
+  will-change: transform;
+  contain: strict;
+  animation: bg-aurora 12s ease-in-out infinite alternate;
 }
-@keyframes bg-aurora { from { transform: rotate(-7deg) scale(1); } to { transform: translate3d(5%,-4%,0) rotate(8deg) scale(1.16); } }
+@keyframes bg-aurora { from { transform: translate3d(-2%, 1%, 0) scale(1); } to { transform: translate3d(3%, -2%, 0) scale(1.08); } }
 
 .bg-fx-stars i {
   position: absolute;
@@ -276,20 +284,21 @@
   width: var(--size);
   height: var(--size);
   background: currentColor;
-  clip-path: polygon(50% 0, 58% 40%, 100% 50%, 58% 60%, 50% 100%, 42% 60%, 0 50%, 42% 40%);
-  filter: drop-shadow(0 0 2px currentColor) drop-shadow(0 0 5px currentColor);
+  border-radius: 999px;
+  will-change: transform, opacity;
   animation: bg-star-twinkle var(--duration) ease-in-out var(--delay) infinite;
 }
-@keyframes bg-star-twinkle { 0%,100% { opacity: .22; transform: scale(.42) rotate(0); } 45% { opacity: 1; transform: scale(1.35) rotate(20deg); } 58% { opacity: .72; transform: scale(.82) rotate(30deg); } }
+@keyframes bg-star-twinkle { 0%,100% { opacity: .2; transform: scale(.65); } 50% { opacity: .95; transform: scale(1.15); } }
 
-.bg-fx-particles i { position: absolute; left: var(--x); bottom: -12%; animation: bg-particle-rise var(--duration) linear var(--delay) infinite; }
-.bg-fx-fireflies i { width: 5px; height: 5px; border-radius: 999px; background: currentColor; box-shadow: 0 0 5px currentColor, 0 0 13px currentColor; }
-.bg-fx-bubbles i { width: var(--size); height: var(--size); border: 1px solid currentColor; border-radius: 999px; background: color-mix(in srgb, currentColor 12%, transparent); box-shadow: inset 2px 2px 4px rgba(255,255,255,.35), 0 0 5px currentColor; }
-.bg-fx-embers i { width: 4px; height: 8px; border-radius: 70% 20% 70% 30%; background: currentColor; box-shadow: 0 0 7px currentColor, 0 0 15px currentColor; }
-.bg-fx-sakura i { width: 8px; height: 5px; border-radius: 80% 10% 80% 10%; background: currentColor; box-shadow: 0 0 5px currentColor; animation-name: bg-petal-fall; }
-.bg-fx-hearts i { color: currentColor; font-style: normal; font-size: var(--font-size); text-shadow: 0 0 8px currentColor; }
-@keyframes bg-particle-rise { from { transform: translate3d(0,10%,0) scale(.7); opacity: 0; } 15% { opacity: .9; } to { transform: translate3d(var(--drift),-125vh,0) scale(1.15); opacity: 0; } }
-@keyframes bg-petal-fall { from { top: -12%; bottom: auto; transform: translateX(0) rotate(0); opacity: 0; } 12% { opacity: .9; } to { top: 112%; bottom: auto; transform: translateX(var(--drift)) rotate(540deg); opacity: .25; } }
+.bg-fx-particles { contain: strict; }
+.bg-fx-particles i { position: absolute; left: var(--x); bottom: -10%; will-change: transform, opacity; animation: bg-particle-rise var(--duration) linear var(--delay) infinite; }
+.bg-fx-fireflies i { width: 4px; height: 4px; border-radius: 999px; background: currentColor; }
+.bg-fx-bubbles i { width: var(--size); height: var(--size); border: 1px solid color-mix(in srgb, currentColor 65%, transparent); border-radius: 999px; background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.28), transparent 70%); }
+.bg-fx-embers i { width: 4px; height: 7px; border-radius: 999px; background: currentColor; }
+.bg-fx-sakura i { width: 7px; height: 5px; border-radius: 80% 10% 80% 10%; background: currentColor; animation-name: bg-petal-fall; }
+.bg-fx-hearts i { color: currentColor; font-style: normal; font-size: var(--font-size); }
+@keyframes bg-particle-rise { from { transform: translate3d(0,0,0) scale(.85); opacity: 0; } 15% { opacity: .75; } 85% { opacity: .65; } to { transform: translate3d(var(--drift),-110vh,0) scale(1.05); opacity: 0; } }
+@keyframes bg-petal-fall { from { top: -10%; bottom: auto; transform: translate3d(0,0,0) rotate(0); opacity: 0; } 15% { opacity: .8; } to { top: 108%; bottom: auto; transform: translate3d(var(--drift),0,0) rotate(360deg); opacity: .2; } }
 
 .bg-fx-matrix { display: flex; justify-content: space-around; overflow: hidden; color: currentColor; font: 9px/1.2 monospace; text-shadow: 0 0 7px currentColor; opacity: .72; }
 .bg-fx-matrix span { display: block; animation: bg-matrix 3.4s linear var(--delay) infinite; }
@@ -361,3 +370,264 @@
 @media (prefers-reduced-motion: reduce) {
   .upet-lyric-wait-dot { animation: none; opacity: .65; }
 }
+
+/* ============================================================================
+   CARD ENTRANCE & FRAME ANIMATIONS (11 Signature Presets)
+   Inspired by user.pet neon sky-aqua (#38bdf8) -> rose-pink (#ec4899) -> violet (#a855f7)
+   ============================================================================ */
+
+@keyframes upet-card-condense {
+  0% { opacity: 0; transform: scale(1.16) translateY(-10px); filter: blur(16px) saturate(1.8); }
+  65% { opacity: 1; transform: scale(0.985) translateY(0); filter: blur(0px) saturate(1.1); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0px) saturate(1); }
+}
+
+@keyframes upet-card-sweep-in {
+  0% { opacity: 0; transform: translateX(-28px) skewX(-4deg) scale(0.96); }
+  100% { opacity: 1; transform: translateX(0) skewX(0deg) scale(1); }
+}
+
+@keyframes upet-card-sweep-beam {
+  0% { transform: translateX(-140%) skewX(-22deg); opacity: 0; }
+  20% { opacity: 0.9; }
+  65% { transform: translateX(220%) skewX(-22deg); opacity: 0; }
+  100% { transform: translateX(220%) skewX(-22deg); opacity: 0; }
+}
+
+@keyframes upet-card-origin {
+  0% { opacity: 0; transform: translateY(36px) scale(0.84); filter: blur(8px); }
+  70% { opacity: 1; transform: translateY(-4px) scale(1.015); filter: blur(0px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+}
+
+@keyframes upet-card-deal {
+  0% { opacity: 0; transform: perspective(1000px) rotateY(-28deg) rotateX(14deg) translateY(28px) scale(0.9); }
+  70% { opacity: 1; transform: perspective(1000px) rotateY(4deg) rotateX(-2deg) translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: perspective(1000px) rotateY(0deg) rotateX(0deg) translateY(0) scale(1); }
+}
+
+@keyframes upet-card-ripple-in {
+  0% { opacity: 0; transform: scale(0.92); }
+  60% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes upet-card-ripple-wave {
+  0% { transform: scale(0.96); opacity: 0.85; }
+  75% { transform: scale(1.06); opacity: 0; }
+  100% { transform: scale(1.06); opacity: 0; }
+}
+
+@keyframes upet-orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes upet-signal-glitch {
+  0%, 100% {
+    box-shadow: -3px 0 0 rgba(56, 189, 248, 0.85), 3px 0 0 rgba(236, 72, 153, 0.85), 0 0 26px rgba(56, 189, 248, 0.28);
+  }
+  33% {
+    box-shadow: 3px -2px 0 rgba(56, 189, 248, 0.9), -3px 2px 0 rgba(236, 72, 153, 0.9), 0 0 32px rgba(236, 72, 153, 0.35);
+  }
+  66% {
+    box-shadow: -2px 2px 0 rgba(168, 85, 247, 0.9), 2px -2px 0 rgba(34, 211, 238, 0.9), 0 0 28px rgba(168, 85, 247, 0.32);
+  }
+}
+
+@keyframes upet-blueprint-scan {
+  0%, 100% { top: 6%; opacity: 0.25; }
+  50% { top: 92%; opacity: 0.85; }
+}
+
+@keyframes upet-lock-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+.upet-card-entrance-condense {
+  animation: upet-card-condense 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.upet-card-entrance-sweep {
+  animation: upet-card-sweep-in 0.78s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.upet-card-entrance-origin {
+  animation: upet-card-origin 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.upet-card-entrance-deal {
+  animation: upet-card-deal 0.92s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-style: preserve-3d;
+}
+
+.upet-card-entrance-ripple {
+  animation: upet-card-ripple-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.upet-card-entrance-signal {
+  animation: upet-card-condense 0.75s ease-out both, upet-signal-glitch 3.2s steps(2, end) infinite;
+}
+
+.upet-card-entrance-trace,
+.upet-card-entrance-circuit,
+.upet-card-entrance-blueprint,
+.upet-card-entrance-lock {
+  animation: upet-card-origin 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Orbiting Laser Trace / Dual Cyber Circuit border beam */
+.upet-frame-trace-spinner {
+  position: absolute;
+  inset: -65%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 285deg,
+    var(--upet-entrance-c2, #ec4899) 310deg,
+    var(--upet-entrance-c1, #38bdf8) 345deg,
+    #ffffff 358deg,
+    transparent 360deg
+  );
+  animation: upet-orbit-spin 3.8s linear infinite;
+}
+
+.upet-frame-circuit-spinner {
+  position: absolute;
+  inset: -65%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 120deg,
+    var(--upet-entrance-c1, #22d3ee) 155deg,
+    #ffffff 176deg,
+    transparent 180deg 300deg,
+    var(--upet-entrance-c2, #f472b6) 335deg,
+    #ffffff 356deg,
+    transparent 360deg
+  );
+  animation: upet-orbit-spin 3.2s linear infinite;
+}
+
+/* Looping Miniature Card Animations in the Editor Picker */
+@keyframes upet-mini-condense {
+  0%, 15% { opacity: 0.15; transform: scale(1.22); filter: blur(5px); }
+  45%, 80% { opacity: 1; transform: scale(1); filter: blur(0px); }
+  100% { opacity: 0.15; transform: scale(0.94); filter: blur(3px); }
+}
+@keyframes upet-mini-sweep {
+  0%, 12% { opacity: 0.2; transform: translateX(-12px) skewX(-6deg); }
+  40%, 82% { opacity: 1; transform: translateX(0) skewX(0deg); }
+  100% { opacity: 0.2; transform: translateX(10px); }
+}
+@keyframes upet-mini-origin {
+  0%, 15% { opacity: 0.15; transform: translateY(14px) scale(0.76); }
+  45%, 82% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0.15; transform: translateY(-6px) scale(0.92); }
+}
+@keyframes upet-mini-deal {
+  0%, 15% { opacity: 0.2; transform: perspective(260px) rotateY(-38deg) rotateX(18deg) translateY(8px) scale(0.85); }
+  45%, 82% { opacity: 1; transform: perspective(260px) rotateY(0deg) rotateX(0deg) translateY(0) scale(1); }
+  100% { opacity: 0.2; transform: perspective(260px) rotateY(22deg) scale(0.9); }
+}
+
+.upet-mini-loop-condense { animation: upet-mini-condense 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+.upet-mini-loop-sweep { animation: upet-mini-sweep 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+.upet-mini-loop-origin { animation: upet-mini-origin 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+.upet-mini-loop-deal { animation: upet-mini-deal 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+
+/* ============================================================================
+   LIGHT MODE: AQUA-TO-PINK PASTEL GLASS & HIGH-CONTRAST DARK PLUM TEXT
+   Ensures zero black boxes and 100% crisp readability when html:not(.dark)
+   ============================================================================ */
+
+html:not(.dark) body {
+  background: linear-gradient(135deg, #dcf8ff 0%, #e6f4ff 26%, #f7ebff 58%, #fde7f3 82%, #ffd9ec 100%) fixed;
+  color: #181126;
+}
+
+html:not(.dark) .dash-bg {
+  background:
+    radial-gradient(65% 55% at 12% 8%, rgba(56, 189, 248, 0.26), transparent 62%),
+    radial-gradient(65% 55% at 88% 12%, rgba(244, 114, 182, 0.28), transparent 62%),
+    radial-gradient(60% 50% at 50% 95%, rgba(236, 72, 153, 0.20), transparent 65%),
+    linear-gradient(135deg, rgba(224, 247, 254, 0.85) 0%, rgba(250, 232, 255, 0.85) 52%, rgba(252, 231, 243, 0.90) 100%) !important;
+}
+
+html:not(.dark) .glass {
+  background: linear-gradient(135deg, rgba(240, 251, 255, 0.88) 0%, rgba(253, 242, 248, 0.90) 100%) !important;
+  border-color: rgba(219, 39, 119, 0.18) !important;
+  box-shadow: 0 14px 36px -18px rgba(131, 24, 67, 0.14), 0 6px 20px -10px rgba(14, 116, 144, 0.10);
+}
+
+/* Convert hardcoded dark hex panels/surfaces into Aqua-to-Pink frosted glass in Light Mode */
+html:not(.dark) [class*="bg-[#080d17]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#050911]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#070d19]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#060609]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#060a12]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#090d16]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#0a101d]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#0a0f1c]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#0b101b]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#0b1220]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#0c1322]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#0d1320]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#0f172a]"]:not([data-testid="profile-card"] *),
+html:not(.dark) [class*="bg-[#111827]"]:not([data-testid="profile-card"] *) {
+  background: linear-gradient(135deg, rgba(235, 250, 255, 0.94) 0%, rgba(253, 238, 248, 0.95) 100%) !important;
+  border-color: rgba(219, 39, 119, 0.20) !important;
+  color: #181126 !important;
+  box-shadow: 0 14px 36px -18px rgba(157, 23, 77, 0.14), 0 4px 14px -6px rgba(6, 182, 212, 0.12) !important;
+}
+
+/* Convert bg-black/* and bg-white/[0.0x] utility boxes into soft blush/aqua glass in Light Mode */
+html:not(.dark) [class*="bg-black/"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *),
+html:not(.dark) .bg-black:not([data-testid="profile-card"] *):not(.editor-preview-frame *) {
+  background: linear-gradient(135deg, rgba(224, 242, 254, 0.78) 0%, rgba(252, 231, 243, 0.84) 100%) !important;
+  border-color: rgba(219, 39, 119, 0.18) !important;
+  color: #181126 !important;
+}
+
+html:not(.dark) [class*="bg-white/[0.0"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *),
+html:not(.dark) [class*="bg-white/5"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *),
+html:not(.dark) [class*="bg-white/10"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *) {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.82) 0%, rgba(253, 242, 248, 0.88) 100%) !important;
+  border-color: rgba(219, 39, 119, 0.18) !important;
+}
+
+/* Ensure borders are visible rose/aqua tinted lines in Light Mode */
+html:not(.dark) [class*="border-white/"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *) {
+  border-color: rgba(190, 24, 93, 0.16) !important;
+}
+
+/* Ensure all text-white and text-white/* utilities outside custom profile cards become crisp dark plum/slate in Light Mode */
+html:not(.dark) .text-white:not([data-testid="profile-card"] *):not(.editor-preview-frame *):not(.bg-primary):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-pink"]):not([class*="bg-sky"]) {
+  color: #181126 !important;
+}
+
+html:not(.dark) [class*="text-white/9"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *),
+html:not(.dark) [class*="text-white/8"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *),
+html:not(.dark) [class*="text-white/7"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *) {
+  color: #2b1f42 !important;
+}
+
+html:not(.dark) [class*="text-white/6"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *),
+html:not(.dark) [class*="text-white/5"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *) {
+  color: #463566 !important;
+}
+
+html:not(.dark) [class*="text-white/4"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *),
+html:not(.dark) [class*="text-white/3"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *),
+html:not(.dark) [class*="text-white/2"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *) {
+  color: #634f87 !important;
+}
+
+html:not(.dark) [class*="placeholder:text-white/"]:not([data-testid="profile-card"] *):not(.editor-preview-frame *)::placeholder {
+  color: #7a639e !important;
+}
+
+html:not(.dark) select option {
+  background-color: #fdf2f8;
+  color: #181126;
+}
+

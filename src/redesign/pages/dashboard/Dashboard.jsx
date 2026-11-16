@@ -4,14 +4,22 @@ import {
   Award,
   ChartNoAxesCombined,
   ExternalLink,
+  FileStack,
   GalleryVerticalEnd,
+  Gamepad2,
   LayoutGrid,
+  Link2,
   LogOut,
   Menu,
+  Moon,
+  Music,
   PenTool,
+  Puzzle,
   Settings as Cog,
+  Share2,
   ShieldCheck,
-  Trophy,
+  Sun,
+  UserRound,
   X,
 } from "lucide-react";
 import { useStore } from "../../lib/store";
@@ -32,8 +40,17 @@ const Presets = lazyWithRetry(() => import("./Presets"), "dashboard-profiles");
 
 const DASHBOARD_PAGES = {
   overview: Overview,
+  analytics: Overview,
+  share: Overview,
+  links: Editor,
   editor: Editor,
+  profile: Editor,
+  templates: Presets,
   profiles: Presets,
+  music: Editor,
+  widgets: Editor,
+  pages: Editor,
+  games: Editor,
   badges: Badges,
   leaderboard: Leaderboard,
   settings: Settings,
@@ -42,18 +59,44 @@ const DASHBOARD_PAGES = {
 };
 const warm = (path) => DASHBOARD_PAGES[path]?.preload?.().catch(() => {});
 
-const NAV = [
+// Legacy mobile filter reference kept for compatibility: ['overview', 'editor', 'profiles', 'settings']
+// Main Section: Overview, Analytics, Share
+const MAIN_NAV = [
   ["overview", "Overview", LayoutGrid],
-  ["editor", "Customize", PenTool],
-  ["profiles", "Profiles", GalleryVerticalEnd],
-  ["badges", "Badges", Award],
-  ["leaderboard", "Leaderboard", Trophy],
-  ["settings", "Settings", Cog],
-  ["visitors", "Visitors", ChartNoAxesCombined],
+  ["analytics", "Analytics", ChartNoAxesCombined],
+  ["share", "Share", Share2],
 ];
 
+// Your Page Section: Links first (Hierarchy Tweak), then Profile, Templates, Music, Widgets, Pages, Games & setup, Badges
+const PAGE_NAV = [
+  ["links", "Links", Link2],
+  ["editor", "Profile", UserRound],
+  ["templates", "Templates", GalleryVerticalEnd],
+  ["music", "Music", Music],
+  ["widgets", "Widgets", Puzzle],
+  ["pages", "Pages", FileStack],
+  ["games", "Games & setup", Gamepad2],
+  ["badges", "Badges", Award],
+];
+
+// Mobile bottom bar quick items
+const MOBILE_BOTTOM_NAV = [
+  ["overview", "Overview", LayoutGrid],
+  ["links", "Links", Link2],
+  ["editor", "Profile", PenTool],
+  ["templates", "Templates", GalleryVerticalEnd],
+  ["settings", "Settings", Cog],
+];
+
+const navItemCls = (isActive) =>
+  `group relative flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-200 ${
+    isActive
+      ? "bg-gradient-to-r from-pink-400 via-violet-400 to-sky-400 text-slate-950 shadow-[0_6px_20px_-4px_rgba(244,114,182,0.5)]"
+      : "text-zinc-300 hover:translate-x-0.5 hover:bg-pink-400/10 hover:text-pink-200"
+  }`;
+
 const Sidebar = () => {
-  const { user, logout } = useStore();
+  const { user, logout, theme, toggleTheme } = useStore();
   const { staff } = useHelpAuth();
   const nav = useNavigate();
   const out = () => {
@@ -63,83 +106,121 @@ const Sidebar = () => {
   return (
     <aside
       data-testid="dashboard-sidebar"
-      className="fixed bottom-4 left-4 top-4 z-40 hidden w-64 flex-col rounded-[22px] border border-white/[0.08] bg-[#08080c]/95 p-4 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.95)] backdrop-blur-xl md:flex"
+      className="fixed bottom-4 left-4 top-4 z-40 hidden w-64 flex-col rounded-[22px] border border-pink-400/20 bg-[#100b22]/92 p-4 shadow-[0_24px_60px_-24px_rgba(8,5,22,0.95)] backdrop-blur-2xl md:flex"
     >
-      <NavLink to="/" className="px-2 py-1" data-testid="sidebar-logo">
-        <Logo />
-      </NavLink>
-
-      <div className="mt-6 px-2 font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-        Control Room
+      <div className="flex items-center justify-between px-2 py-1">
+        <NavLink to="/" data-testid="sidebar-logo">
+          <Logo />
+        </NavLink>
+        <button
+          type="button"
+          data-testid="sidebar-theme-toggle"
+          onClick={toggleTheme}
+          title="Toggle Light / Dark theme"
+          aria-label="Toggle Light / Dark theme"
+          className="grid h-8 w-8 place-items-center rounded-full border border-pink-400/25 bg-white/[0.05] text-zinc-300 transition-all hover:border-pink-400/50 hover:text-white"
+        >
+          {theme === "dark" ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+        </button>
       </div>
 
-      <nav className="mt-2 flex-1 space-y-1">
-        {NAV.filter(([path]) => path !== "visitors" || user.role === "founder").map(([path, label, Icon]) => (
-          <NavLink
-            key={path}
-            to={`/dashboard/${path}`}
-            onMouseEnter={() => warm(path)}
-            onFocus={() => warm(path)}
-            data-testid={`sidebar-${path}`}
-            className={({ isActive }) =>
-              `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
-                isActive
-                  ? "bg-gradient-to-r from-sky-300 via-sky-400 to-cyan-400 text-slate-950 shadow-[0_6px_20px_-4px_rgba(56,189,248,0.55)]"
-                  : "text-zinc-400 hover:translate-x-0.5 hover:bg-sky-400/10 hover:text-sky-200"
-              }`
-            }
-          >
-            <Icon className="h-4 w-4" />
-            <span>{label}</span>
-          </NavLink>
-        ))}
+      <div className="scroll-thin mt-4 flex-1 space-y-4 overflow-y-auto pr-1">
+        {/* Main Section */}
+        <div>
+          <div className="px-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-pink-300/80">
+            Main
+          </div>
+          <nav className="mt-1.5 space-y-1" aria-label="Main navigation">
+            {MAIN_NAV.map(([path, label, Icon]) => (
+              <NavLink
+                key={path}
+                to={`/dashboard/${path}`}
+                onMouseEnter={() => warm(path)}
+                onFocus={() => warm(path)}
+                data-testid={`sidebar-${path}`}
+                className={({ isActive }) => navItemCls(isActive)}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </div>
 
-        {(staff?.active || user.role === "founder") && (
-          <NavLink
-            to="/dashboard/modview"
-            onMouseEnter={() => warm("modview")}
-            onFocus={() => warm("modview")}
-            data-testid="sidebar-modview"
-            className={({ isActive }) =>
-              `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all ${
-                isActive
-                  ? "bg-white text-[#050507]"
-                  : "text-zinc-400 hover:bg-white/[0.05] hover:text-white"
-              }`
-            }
-          >
-            <ShieldCheck className="h-4 w-4" />
-            <span>Modview</span>
-          </NavLink>
-        )}
-      </nav>
+        {/* Your Page Section */}
+        <div>
+          <div className="px-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-sky-300/80">
+            Your Page
+          </div>
+          <nav className="mt-1.5 space-y-1" aria-label="Your Page navigation">
+            {PAGE_NAV.map(([path, label, Icon]) => (
+              <NavLink
+                key={path}
+                to={`/dashboard/${path}`}
+                onMouseEnter={() => warm(path)}
+                onFocus={() => warm(path)}
+                data-testid={`sidebar-${path}`}
+                className={({ isActive }) => navItemCls(isActive)}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{label}</span>
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+
+        {/* Account & Admin */}
+        <div>
+          <div className="px-2 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-400">
+            Account
+          </div>
+          <nav className="mt-1.5 space-y-1" aria-label="Account navigation">
+            <NavLink
+              to="/dashboard/settings"
+              onMouseEnter={() => warm("settings")}
+              onFocus={() => warm("settings")}
+              data-testid="sidebar-settings"
+              className={({ isActive }) => navItemCls(isActive)}
+            >
+              <Cog className="h-4 w-4 shrink-0" />
+              <span>Settings</span>
+            </NavLink>
+
+            {(staff?.active || user.role === "founder") && (
+              <NavLink
+                to="/dashboard/modview"
+                onMouseEnter={() => warm("modview")}
+                onFocus={() => warm("modview")}
+                data-testid="sidebar-modview"
+                className={({ isActive }) => navItemCls(isActive)}
+              >
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span>Modview &amp; Notes</span>
+              </NavLink>
+            )}
+          </nav>
+        </div>
+      </div>
 
       <button
         data-testid="sidebar-view-page"
         onClick={() => nav(`/${user.username}`)}
-        className="mb-2 flex items-center justify-between rounded-xl border border-white/[0.08] bg-[#0c0c12] px-3 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-white/25 hover:text-white"
+        className="mt-3 mb-2 flex items-center justify-between rounded-xl border border-pink-400/20 bg-[#150f2c] px-3 py-2 text-xs font-medium text-zinc-200 transition-colors hover:border-pink-400/45 hover:text-white"
       >
-        <span>user.pet/{user.username}</span>
-        <ExternalLink className="h-3.5 w-3.5 text-zinc-400" />
-      </button>
-
-      <button
-        data-testid="sidebar-logout"
-        onClick={out}
-        className="mb-3 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-rose-400 transition-colors hover:bg-rose-500/10"
-      >
-        <LogOut className="h-4 w-4" />
-        <span>Logout</span>
+        <span className="truncate">user.pet/{user.username}</span>
+        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-pink-300" />
       </button>
 
       <div
         data-testid="sidebar-profile-box"
-        className="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-[#060609] p-3"
+        className="flex items-center gap-3 rounded-2xl border border-pink-400/20 bg-[#0d091a] p-2.5"
       >
-        <Avatar media={user.profile.media.avatar} name={user.username} size={38} />
+        <Avatar media={user.profile.media.avatar} name={user.username} size={36} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-xs font-semibold text-white">{user.username}</div>
-          <div className="truncate font-mono text-[10px] text-zinc-400">UID #1 · {user.role || "member"}</div>
+          <div className="truncate font-mono text-[10px] text-zinc-400">
+            UID #1 · {user.role || "member"}
+          </div>
         </div>
         <button
           data-testid="sidebar-profile-logout"
@@ -155,7 +236,7 @@ const Sidebar = () => {
 };
 
 const MobileNav = () => {
-  const { user, saveState, logout } = useStore();
+  const { user, saveState, logout, theme, toggleTheme } = useStore();
   const { staff } = useHelpAuth();
   const [open, setOpen] = useState(false);
   const nav = useNavigate();
@@ -165,10 +246,9 @@ const MobileNav = () => {
     logout();
     nav("/");
   };
-  const links = NAV.filter(([path]) => path !== "visitors" || user.role === "founder");
   return (
     <>
-      <header className="fixed inset-x-3 top-[max(.75rem,env(safe-area-inset-top))] z-40 flex h-14 items-center justify-between rounded-2xl border border-white/[0.08] bg-[#08080c]/95 px-4 backdrop-blur-xl md:hidden">
+      <header className="fixed inset-x-3 top-[max(.75rem,env(safe-area-inset-top))] z-40 flex h-14 items-center justify-between rounded-2xl border border-pink-400/20 bg-[#100b22]/92 px-4 backdrop-blur-2xl md:hidden">
         <NavLink to="/">
           <Logo />
         </NavLink>
@@ -178,10 +258,18 @@ const MobileNav = () => {
           </span>
           <button
             type="button"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-pink-400/20 bg-white/[0.06] text-white"
+          >
+            {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </button>
+          <button
+            type="button"
             onClick={() => setOpen((value) => !value)}
             aria-label="Open dashboard menu"
             aria-expanded={open}
-            className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/[0.06] text-white"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-pink-400/20 bg-white/[0.06] text-white"
           >
             {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
@@ -193,80 +281,117 @@ const MobileNav = () => {
           onClick={close}
         >
           <nav
-            className="max-h-full overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0a0f] p-2"
+            className="max-h-full space-y-3 overflow-y-auto rounded-2xl border border-pink-400/25 bg-[#100b22]/96 p-3 backdrop-blur-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            {links.map(([path, label, Icon]) => (
+            <div>
+              <div className="px-2 pb-1 font-mono text-[10px] font-bold uppercase tracking-wider text-pink-300">
+                Main
+              </div>
+              {MAIN_NAV.map(([path, label, Icon]) => (
+                <NavLink
+                  key={path}
+                  to={`/dashboard/${path}`}
+                  onPointerDown={() => warm(path)}
+                  onClick={close}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
+                      isActive ? "bg-gradient-to-r from-pink-400 to-sky-400 text-slate-950 font-bold" : "text-zinc-300"
+                    }`
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+            <div>
+              <div className="px-2 pb-1 font-mono text-[10px] font-bold uppercase tracking-wider text-sky-300">
+                Your Page
+              </div>
+              {PAGE_NAV.map(([path, label, Icon]) => (
+                <NavLink
+                  key={path}
+                  to={`/dashboard/${path}`}
+                  onPointerDown={() => warm(path)}
+                  onClick={close}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
+                      isActive ? "bg-gradient-to-r from-pink-400 to-sky-400 text-slate-950 font-bold" : "text-zinc-300"
+                    }`
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+            <div className="border-t border-white/10 pt-2">
               <NavLink
-                key={path}
-                to={`/dashboard/${path}`}
-                onPointerDown={() => warm(path)}
+                to="/dashboard/settings"
                 onClick={close}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium ${
-                    isActive ? "bg-white text-[#050507]" : "text-zinc-300"
+                  `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
+                    isActive ? "bg-gradient-to-r from-pink-400 to-sky-400 text-slate-950 font-bold" : "text-zinc-300"
                   }`
                 }
               >
-                <Icon className="h-4 w-4" />
-                {label}
+                <Cog className="h-4 w-4" />
+                Settings
               </NavLink>
-            ))}
-            {staff?.active && (
-              <NavLink
-                to="/dashboard/modview"
-                onClick={close}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium ${
-                    isActive ? "bg-white text-[#050507]" : "text-zinc-300"
-                  }`
-                }
+              {(staff?.active || user.role === "founder") && (
+                <NavLink
+                  to="/dashboard/modview"
+                  onClick={close}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium ${
+                      isActive ? "bg-gradient-to-r from-pink-400 to-sky-400 text-slate-950 font-bold" : "text-zinc-300"
+                    }`
+                  }
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  Modview
+                </NavLink>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  nav(`/${user.username}`);
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-300"
               >
-                <ShieldCheck className="h-4 w-4" />
-                Modview
-              </NavLink>
-            )}
-            <div className="my-2 border-t border-white/10" />
-            <button
-              type="button"
-              onClick={() => {
-                close();
-                nav(`/${user.username}`);
-              }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-zinc-300"
-            >
-              <ExternalLink className="h-4 w-4" />
-              View my page
-            </button>
-            <button
-              type="button"
-              onClick={out}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-rose-400"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </button>
+                <ExternalLink className="h-4 w-4" />
+                View my page
+              </button>
+              <button
+                type="button"
+                onClick={out}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-rose-400"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
           </nav>
         </div>
       )}
-      <nav className="fixed inset-x-3 bottom-[max(.75rem,env(safe-area-inset-bottom))] z-40 grid grid-cols-4 rounded-2xl border border-white/10 bg-[#08080c]/95 p-1.5 backdrop-blur-xl md:hidden">
-        {NAV.filter(([path]) => ['overview', 'editor', 'profiles', 'settings'].includes(path)).map(
-          ([path, label, Icon]) => (
-            <NavLink
-              key={path}
-              to={`/dashboard/${path}`}
-              onPointerDown={() => warm(path)}
-              className={({ isActive }) =>
-                `flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold ${
-                  isActive ? "bg-white text-[#050507]" : "text-zinc-400"
-                }`
-              }
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </NavLink>
-          )
-        )}
+      <nav className="fixed inset-x-3 bottom-[max(.75rem,env(safe-area-inset-bottom))] z-40 grid grid-cols-5 rounded-2xl border border-pink-400/20 bg-[#100b22]/95 p-1.5 backdrop-blur-2xl md:hidden">
+        {MOBILE_BOTTOM_NAV.map(([path, label, Icon]) => (
+          <NavLink
+            key={path}
+            to={`/dashboard/${path}`}
+            onPointerDown={() => warm(path)}
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-1 rounded-xl px-1.5 py-2 text-[10px] font-semibold ${
+                isActive ? "bg-gradient-to-r from-pink-400 to-sky-400 text-slate-950" : "text-zinc-400"
+              }`
+            }
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </NavLink>
+        ))}
       </nav>
     </>
   );
@@ -289,17 +414,26 @@ export default function Dashboard() {
           <Routes>
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<Overview />} />
+            <Route path="analytics" element={<Overview focusAnalytics />} />
+            <Route path="share" element={<Overview focusShare />} />
+            <Route path="links" element={<Editor initialTab="links" />} />
             <Route path="editor" element={<Editor />} />
-            <Route path="shop" element={<Navigate to="/dashboard/editor" replace />} />
-            <Route path="premium" element={<Navigate to="/dashboard/editor" replace />} />
-            <Route path="notifications/*" element={<Navigate to="/dashboard/overview" replace />} />
+            <Route path="profile" element={<Editor initialTab="card" />} />
+            <Route path="templates" element={<Presets />} />
             <Route path="profiles" element={<Presets />} />
+            <Route path="music" element={<Editor initialTab="audio" />} />
+            <Route path="widgets" element={<Editor initialTab="links" />} />
+            <Route path="pages" element={<Editor initialTab="entry" />} />
+            <Route path="games" element={<Editor initialTab="links" />} />
             <Route path="badges" element={<Badges />} />
             <Route path="leaderboard" element={<Leaderboard />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="shop" element={<Navigate to="/dashboard/editor" replace />} />
+            <Route path="premium" element={<Navigate to="/dashboard/editor" replace />} />
+            <Route path="notifications/*" element={<Navigate to="/dashboard/overview" replace />} />
             <Route path="studio-v2" element={<Navigate to="/dashboard/editor" replace />} />
             {user.role === "founder" && <Route path="visitors" element={<VisitorAnalytics />} />}
-            <Route path="modview" element={<Modview />} />
+            <Route path="modview/*" element={<Modview />} />
           </Routes>
         </Suspense>
       </main>

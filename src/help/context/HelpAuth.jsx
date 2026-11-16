@@ -25,8 +25,9 @@ export function HelpAuthProvider({ children }) {
     const syncLocal = () => {
       const local = readLocalHelpSession();
       if (!local) return false;
-      setUser({ uid: local.uid || `local-user-${local.username}`, email: local.email || `${local.username}@user.pet`, username: local.username, emailVerified: true, isLocalDev: true, getIdToken: async () => 'local-dev-token' });
-      setStaff({ active: true, role: 'owner', department: 'operations', jobTitle: 'Founder', permissions: ['tickets', 'articles', 'legal', 'reports', 'accounts', 'staff'] });
+      const nextUser = { uid: local.uid || `local-user-${local.username}`, email: local.email || `${local.username}@user.pet`, username: local.username, emailVerified: true, isLocalDev: true, getIdToken: async () => 'local-dev-token' };
+      setUser(nextUser);
+      setStaff(isApprovedFounder(nextUser) ? { active: true, role: 'owner', department: 'operations', jobTitle: 'Founder', permissions: ['tickets', 'articles', 'legal', 'reports', 'accounts', 'staff'] } : null);
       setReady(true);
       return true;
     };
@@ -73,13 +74,15 @@ export function HelpAuthProvider({ children }) {
     const username = (cleanedInput.includes('@') ? cleanedInput.split('@')[0] : cleanedInput).replace(/[^a-z0-9._-]/g, '');
     if (!username || username === 'amber') return { ok: false, error: 'Enter your account email or username.' };
     const email = cleanedInput.includes('@') ? cleanedInput : `${username}@user.pet`;
-    const sessionData = { uid: `local-user-${username}`, email, username, role: 'founder', createdAt: Date.now() };
+    const nextUser = { uid: `local-user-${username}`, email, username, emailVerified: true, isLocalDev: true, getIdToken: async () => 'local-dev-token' };
+    const approved = isApprovedFounder(nextUser);
+    const sessionData = { uid: nextUser.uid, email, username, role: approved ? 'founder' : 'member', createdAt: Date.now() };
     try {
       window.localStorage.setItem('upet_local_dev_session_v1', JSON.stringify(sessionData));
       window.dispatchEvent(new Event('upet-local-auth-change'));
     } catch {}
-    setUser({ uid: sessionData.uid, email: sessionData.email, username: sessionData.username, emailVerified: true, isLocalDev: true, getIdToken: async () => 'local-dev-token' });
-    setStaff({ active: true, role: 'owner', department: 'operations', jobTitle: 'Founder', permissions: ['tickets', 'articles', 'legal', 'reports', 'accounts', 'staff'] });
+    setUser(nextUser);
+    setStaff(approved ? { active: true, role: 'owner', department: 'operations', jobTitle: 'Founder', permissions: ['tickets', 'articles', 'legal', 'reports', 'accounts', 'staff'] } : null);
     setReady(true);
     return { ok: true };
   };

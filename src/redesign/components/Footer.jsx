@@ -29,7 +29,7 @@ export const Footer = ({ links = LINKS, socials = SOCIALS, className = "" }) => 
       <div>
         <Logo />
         <p className="mt-3 max-w-xs text-xs leading-relaxed text-zinc-400">
-          Your page, your sound, your style. Claim a one-character handle, customize 60fps ReactBits shaders, interactive start screens, custom fonts, and custom cursors.
+          Your page, your sound, your style. Customize ReactBits shaders, interactive start screens, expressive fonts, synced lyrics, and custom cursors.
         </p>
         <div className="mt-5 flex gap-2">
           {socials.map(([p, href]) => (
@@ -48,7 +48,7 @@ export const Footer = ({ links = LINKS, socials = SOCIALS, className = "" }) => 
       </div>
 
       <div>
-        <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Product</div>
+        <div className="font-mono text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Product</div>
         <div className="mt-3 flex flex-col gap-2.5">
           {links.slice(0, 3).map(([l, to]) =>
             to.startsWith("http") ? (
@@ -65,7 +65,7 @@ export const Footer = ({ links = LINKS, socials = SOCIALS, className = "" }) => 
       </div>
 
       <div>
-        <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Resources</div>
+        <div className="font-mono text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Resources</div>
         <div className="mt-3 flex flex-col gap-2.5">
           {links.slice(3, 5).map(([l, to]) =>
             to.startsWith("http") ? (
@@ -82,7 +82,7 @@ export const Footer = ({ links = LINKS, socials = SOCIALS, className = "" }) => 
       </div>
 
       <div>
-        <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Legal & Help</div>
+        <div className="font-mono text-[13px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Legal & Help</div>
         <div className="mt-3 flex flex-col gap-2.5">
           {links.slice(5).map(([l, to]) =>
             to.startsWith("http") ? (

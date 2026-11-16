@@ -292,6 +292,35 @@ export function LinksTab() {
                   ))}
                 </select>
 
+                <div
+                  className="inline-flex h-10 shrink-0 items-center rounded-xl border border-white/[0.09] bg-[#0c0c12] p-1"
+                  role="group"
+                  aria-label="Bento tile width"
+                >
+                  {[
+                    ["auto", "Auto"],
+                    ["half", "Half"],
+                    ["full", "Full"],
+                  ].map(([spanId, spanLabel]) => {
+                    const activeSpan = (l.span || "auto") === spanId;
+                    return (
+                      <button
+                        key={spanId}
+                        type="button"
+                        data-testid={`link-span-${i}-${spanId}`}
+                        onClick={() => edit(i, "span", spanId)}
+                        className={`rounded-lg px-2 py-1 text-[11px] font-semibold transition-colors ${
+                          activeSpan
+                            ? "bg-gradient-to-r from-pink-400 to-sky-400 text-slate-950"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {spanLabel}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <div className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"

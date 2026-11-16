@@ -201,34 +201,222 @@ function Connections() {
   );
 }
 
+const DEFAULT_INTERNAL_NOTES = [
+  {
+    id: 'note-sec-patch',
+    title: 'Client-side directory leak patched & RLS active',
+    body: 'Moved account lookup to server-side /api/account and locked down directory enumeration.',
+    category: 'Security',
+    pinned: true,
+    author: 'dome',
+    createdAt: '2026-11-16',
+  },
+  {
+    id: 'note-founder-tier',
+    title: 'Founder & Priority Support Tier verified',
+    body: 'waybetterperson@gmail.com added to hardcoded FOUNDER_EMAILS and server modviewPolicy founder list.',
+    category: 'Priority',
+    pinned: true,
+    author: 'lamp',
+    createdAt: '2026-11-16',
+  },
+];
+
 function FounderAndAccount() {
   const { user, grantFounder } = useStore();
+  const [notes, setNotes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('upet_founder_internal_notes_v1');
+      return saved ? JSON.parse(saved) : DEFAULT_INTERNAL_NOTES;
+    } catch {
+      return DEFAULT_INTERNAL_NOTES;
+    }
+  });
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteBody, setNoteBody] = useState('');
+  const [noteCategory, setNoteCategory] = useState('Priority');
+  const [noteFilter, setNoteFilter] = useState('All');
+
+  // Strict guard: regular users who do not have the approved Founder role never see this component
+  if (!user || user.role !== 'founder' || !isApprovedFounder(user)) {
+    return null;
+  }
+
+  const saveNotes = (next) => {
+    setNotes(next);
+    try {
+      localStorage.setItem('upet_founder_internal_notes_v1', JSON.stringify(next));
+    } catch {}
+  };
+
+  const addNote = (e) => {
+    e.preventDefault();
+    if (!noteTitle.trim() && !noteBody.trim()) return toast.error('Write a note title or body first');
+    const item = {
+      id: `note-${Date.now().toString(36)}`,
+      title: noteTitle.trim() || 'Founder Note',
+      body: noteBody.trim(),
+      category: noteCategory,
+      pinned: noteCategory === 'Priority' || noteCategory === 'Security',
+      author: user.username || user.email,
+      createdAt: new Date().toISOString().slice(0, 10),
+    };
+    saveNotes([item, ...notes]);
+    setNoteTitle('');
+    setNoteBody('');
+    toast.success('Internal founder note saved');
+  };
+
+  const togglePin = (id) => {
+    saveNotes(notes.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)));
+  };
+
+  const removeNote = (id) => {
+    saveNotes(notes.filter((n) => n.id !== id));
+    toast.success('Internal note removed');
+  };
 
   const handleGrantFounder = () => {
-    grantFounder?.();
-    toast.success(`Founder role & badges granted to @${user.username}`);
+    const res = grantFounder?.();
+    if (res?.ok === false) return toast.error(res.error);
+    toast.success(`Founder role & badges synced for @${user.username}`);
   };
+
+  const filteredNotes = notes.filter((n) => noteFilter === 'All' || n.category === noteFilter);
 
   return (
     <Panel
-      title={<span className="flex items-center gap-2"><Crown className="h-4 w-4 text-primary" />Founder access</span>}
-      desc="Grant your signed-in account full Founder permissions and official Founder badges."
+      title={<span className="flex items-center gap-2"><Crown className="h-4 w-4 text-primary" />Founder Control Room &amp; Internal Notes</span>}
+      desc="Restricted to verified user.pet Founders. Regular members cannot see or access this panel."
       testid="settings-founder"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/[.06] p-4">
-        <div>
-          <div className="text-sm font-bold">Current role: <span className="uppercase text-primary">{user.role || 'member'}</span></div>
-          <div className="text-xs text-muted-foreground">Signed in as <span className="font-semibold text-foreground">@{user.username}</span> ({user.email})</div>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/[.06] p-4">
+          <div>
+            <div className="text-sm font-bold">
+              Verified Founder Tier: <span className="uppercase text-primary">{user.role}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Signed in as <span className="font-semibold text-foreground">@{user.username}</span> ({user.email}) · Priority Support &amp; Founder Roster (`waybetterperson@gmail.com` active)
+            </div>
+          </div>
+          <button
+            type="button"
+            data-testid="grant-founder-button"
+            onClick={handleGrantFounder}
+            className={btnCls}
+          >
+            <Crown className="h-4 w-4" />
+            Sync Founder role &amp; badges
+          </button>
         </div>
-        <button
-          type="button"
-          data-testid="grant-founder-button"
-          onClick={handleGrantFounder}
-          className={btnCls}
+
+        {/* Internal Admin / Founder Notes System */}
+        <div
+          data-testid="founder-internal-notes"
+          className="rounded-2xl border border-pink-400/20 bg-[#0e0a1c]/80 p-4"
         >
-          <Crown className="h-4 w-4" />
-          {user.role === 'founder' ? 'Refresh Founder role & badges' : 'Grant myself Founder'}
-        </button>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="font-mono text-xs font-bold uppercase tracking-wider text-pink-300">
+                Internal Founder &amp; Admin Notes
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Private operational notes, priority support flags, and security logs for the Founder team.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {['All', 'Priority', 'Security', 'Roadmap', 'Support'].map((cat) => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setNoteFilter(cat)}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                    noteFilter === cat
+                      ? 'bg-gradient-to-r from-pink-400 to-sky-400 text-slate-950'
+                      : 'border border-white/10 bg-white/[0.04] text-zinc-300'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={addNote} className="mt-3 grid gap-2.5 sm:grid-cols-[1fr_140px_auto]">
+            <input
+              data-testid="founder-note-title-input"
+              className={inputCls}
+              placeholder="Note title or @username reference…"
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+            />
+            <select
+              value={noteCategory}
+              onChange={(e) => setNoteCategory(e.target.value)}
+              className={inputCls}
+            >
+              <option value="Priority">Priority</option>
+              <option value="Security">Security</option>
+              <option value="Roadmap">Roadmap</option>
+              <option value="Support">Support</option>
+            </select>
+            <button type="submit" data-testid="founder-note-add-btn" className={btnCls}>
+              Add note
+            </button>
+            <textarea
+              data-testid="founder-note-body-input"
+              rows={2}
+              className={`${inputCls} sm:col-span-3`}
+              placeholder="Write internal details for founders and admins…"
+              value={noteBody}
+              onChange={(e) => setNoteBody(e.target.value)}
+            />
+          </form>
+
+          <div className="mt-3 space-y-2">
+            {filteredNotes.map((n) => (
+              <div
+                key={n.id}
+                className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-pink-400/15 px-2 py-0.5 font-mono text-[10px] font-bold text-pink-300">
+                      {n.category}
+                    </span>
+                    {n.pinned && (
+                      <span className="rounded-full bg-amber-400/15 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
+                        PINNED
+                      </span>
+                    )}
+                    <strong className="text-xs font-bold text-foreground">{n.title}</strong>
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      by @{n.author} · {n.createdAt}
+                    </span>
+                  </div>
+                  {n.body && <p className="mt-1 text-xs text-muted-foreground">{n.body}</p>}
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => togglePin(n.id)}
+                    className="rounded-lg border border-white/10 px-2 py-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground"
+                  >
+                    {n.pinned ? 'Unpin' : 'Pin'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeNote(n.id)}
+                    className="rounded-lg border border-rose-500/30 px-2 py-1 text-[10px] font-semibold text-rose-400 hover:bg-rose-500/10"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </Panel>
   );
@@ -478,7 +666,7 @@ function VerifyOnDiscord() {
 
 export default function Settings() {
   const { user } = useStore();
-  const showFounderPanel = isApprovedFounder({ ...user, emailVerified: true });
+  const showFounderPanel = Boolean(user && user.role === 'founder' && isApprovedFounder(user));
 
   return (
     <div className="space-y-4" data-testid="settings-page">

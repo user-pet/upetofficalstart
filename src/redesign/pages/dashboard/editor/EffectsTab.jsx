@@ -60,33 +60,43 @@ export const EffectsTab = ({ p, up }) => (
     </Panel>
 
     <Panel
-      title="Background Effect (ReactBits Engine)"
-      desc="60fps WebGL shaders & animated canvas scenes behind your card."
+      title="LIVE EFFECTS · ReactBits Shaders"
+      desc="High-depth ReactBits backgrounds (Galaxy, Silk, Iridescence, Clouds, Ghost Fibers, CRT Warp) tuned for dark violet/navy and pink-to-aqua accents."
+      testid="live-effects-grid"
     >
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+      <div className="mb-2.5 flex items-center justify-between">
+        <span className="font-mono text-[13px] font-bold uppercase tracking-wider text-pink-300">
+          LIVE EFFECTS
+        </span>
+        <span className="font-mono text-xs text-zinc-400">
+          Active: {BG_FX.find(([id]) => id === p.effects.background)?.[1] || p.effects.background}
+        </span>
+      </div>
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
         {BG_FX.map(([id, label]) => {
           const active = p.effects.background === id;
           return (
             <button
               type="button"
               key={id}
+              data-testid={`shader-effect-${id}`}
               onClick={() => up((d) => { d.effects.background = id; })}
-              className={`group relative overflow-hidden rounded-xl border p-2.5 text-left transition-all ${
+              className={`group relative overflow-hidden rounded-xl border p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 ${
                 active
-                  ? "border-white ring-1 ring-white/20"
-                  : "border-white/[0.08] hover:border-white/25"
+                  ? "border-pink-400 bg-pink-400/10 ring-1 ring-pink-400/35"
+                  : "border-white/[0.08] bg-[#0e0a1c] hover:border-pink-400/35"
               }`}
             >
-              <div className="relative mb-2 h-12 w-full overflow-hidden rounded-lg border border-white/[0.07] bg-[#050507]">
+              <div className="relative mb-2 h-14 w-full overflow-hidden rounded-lg border border-white/[0.08] bg-[#0b0816]">
                 {id !== "none" ? (
-                  <BackgroundFx kind={id} amount={50} color={p.effects.backgroundColor} preview />
+                  <BackgroundFx kind={id} amount={68} color={p.effects.backgroundColor || "#f472b6"} preview />
                 ) : (
-                  <div className="grid h-full place-items-center text-[10px] text-zinc-600">Off</div>
+                  <div className="grid h-full place-items-center text-xs text-zinc-500">None</div>
                 )}
               </div>
               <div className="flex items-center justify-between gap-1">
                 <span className="truncate text-xs font-semibold text-white">{label}</span>
-                <Wand2 className={`h-3 w-3 shrink-0 ${active ? "text-white" : "text-zinc-500"}`} />
+                <Wand2 className={`h-3.5 w-3.5 shrink-0 ${active ? "text-pink-300" : "text-zinc-500"}`} />
               </div>
             </button>
           );
@@ -118,7 +128,7 @@ export const EffectsTab = ({ p, up }) => (
 
     <Panel
       title="Custom Cursors & Hover Trails"
-      desc="Hover or click any cursor card to test it live across your profile and the website. Choose from 12 built-in SVG pointers and pair with a 60fps particle trail."
+      desc="Hover or click any cursor card to test it live across your profile and the website. Choose from 12 built-in SVG pointers and pair with a reactive particle trail."
     >
       <div className="mb-2 flex items-center justify-between text-xs font-medium text-zinc-400">
         <span>Built-in Custom Cursor Pointers (12 Presets)</span>

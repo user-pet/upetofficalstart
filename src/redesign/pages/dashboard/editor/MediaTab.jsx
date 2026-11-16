@@ -1,10 +1,11 @@
 import { useRef } from "react";
 import { toast } from "sonner";
-import { Upload, Trash2, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { Upload, Trash2, SlidersHorizontal, RotateCcw, Wand2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover";
 import { useStore, fileToDataUrl } from "../../../lib/store";
-import { Panel, SliderRow, inputCls } from "../../../components/Controls";
-import { MediaLayer } from "../../../components/ProfileBits";
+import { Panel, SliderRow, ColorRow, inputCls } from "../../../components/Controls";
+import { BackgroundFx, MediaLayer } from "../../../components/ProfileBits";
+import { BG_FX } from "../../../lib/catalog";
 
 const SLOTS = [
   ["avatar", "Avatar", 20, "rounded-full", true],
@@ -134,25 +135,89 @@ const MediaBox = ({ slot, label, max, shape, video }) => {
 };
 
 export function MediaTab() {
-  const { storageError, user } = useStore();
+  const { storageError, user, setProfile } = useStore();
   const visibleSlots = SLOTS.filter(([slot]) => slot !== "banner" || user.profile.card.layout === "banner");
+  const activeBgFx = user.profile.effects?.background || "aurora";
+  const bgFxColor = user.profile.effects?.backgroundColor || "#f472b6";
+
   return (
-    <Panel
-      title="Media"
-      desc="Upload images or looping video, then fine-tune zoom, blur, rotation, size and position. Background images retain up to 4K resolution."
-    >
-      {storageError && <div className="mb-3 rounded-xl bg-rose-500/10 p-2 text-xs text-rose-400">{storageError}</div>}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {visibleSlots.map(([slot, label, max, shape, video]) => (
-          <MediaBox key={slot} slot={slot} label={label} max={max} shape={shape} video={video} />
-        ))}
-      </div>
-      {user.profile.card.layout !== "banner" && (
-        <p className="mt-3 text-xs text-zinc-400">
-          Banner media appears here only when <strong className="text-white">Banner</strong> is selected in the Card tab.
-        </p>
-      )}
-    </Panel>
+    <div className="min-w-0 space-y-4">
+      <Panel
+        title="Media"
+        desc="Upload images or looping video, then fine-tune zoom, blur, rotation, size and position. Background images retain up to 4K resolution."
+      >
+        {storageError && <div className="mb-3 rounded-xl bg-rose-500/10 p-2 text-xs text-rose-400">{storageError}</div>}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {visibleSlots.map(([slot, label, max, shape, video]) => (
+            <MediaBox key={slot} slot={slot} label={label} max={max} shape={shape} video={video} />
+          ))}
+        </div>
+        {user.profile.card.layout !== "banner" && (
+          <p className="mt-3 text-xs text-zinc-400">
+            Banner media appears here only when <strong className="text-white">Cover (Banner)</strong> is selected in the Card tab.
+          </p>
+        )}
+      </Panel>
+
+      <Panel
+        title="LIVE EFFECTS · Background Shaders"
+        desc="Select a live ReactBits shader background (Galaxy, Silk, Iridescence, Clouds, Ghost Fibers, CRT Warp) to give your page instant depth."
+        testid="media-live-effects"
+      >
+        <div className="mb-2.5 flex items-center justify-between">
+          <span className="font-mono text-[13px] font-bold uppercase tracking-wider text-pink-300">
+            LIVE EFFECTS
+          </span>
+          <span className="font-mono text-xs text-zinc-400">
+            {BG_FX.find(([id]) => id === activeBgFx)?.[1] || activeBgFx}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4">
+          {BG_FX.slice(0, 12).map(([id, label]) => {
+            const active = activeBgFx === id;
+            return (
+              <button
+                type="button"
+                key={id}
+                data-testid={`live-bg-fx-${id}`}
+                onClick={() => setProfile("effects.background", id)}
+                className={`group relative overflow-hidden rounded-xl border p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5 ${
+                  active
+                    ? "border-pink-400 bg-pink-400/10 ring-1 ring-pink-400/35"
+                    : "border-white/[0.08] bg-[#0e0a1c] hover:border-pink-400/35"
+                }`}
+              >
+                <div className="relative mb-2 h-14 w-full overflow-hidden rounded-lg border border-white/[0.08] bg-[#0b0816]">
+                  {id !== "none" ? (
+                    <BackgroundFx kind={id} amount={68} color={bgFxColor} preview />
+                  ) : (
+                    <div className="grid h-full place-items-center text-xs text-zinc-500">None</div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-1">
+                  <span className="truncate text-xs font-semibold text-white">{label}</span>
+                  <Wand2 className={`h-3.5 w-3.5 shrink-0 ${active ? "text-pink-300" : "text-zinc-500"}`} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {activeBgFx !== "none" && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <SliderRow
+              label="Shader intensity"
+              value={user.profile.effects?.backgroundAmount ?? 60}
+              onChange={(v) => setProfile("effects.backgroundAmount", v)}
+            />
+            <ColorRow
+              label="Shader accent color"
+              value={bgFxColor}
+              onChange={(v) => setProfile("effects.backgroundColor", v)}
+            />
+          </div>
+        )}
+      </Panel>
+    </div>
   );
 }
 

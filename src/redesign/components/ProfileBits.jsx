@@ -285,24 +285,86 @@ export const BackgroundFx = ({ kind, amount = 50, color = "#ffffff", preview = f
           }}
         />
       )}
+      {kind === "galaxy" && (
+        <div
+          className="bg-fx-aurora absolute -inset-[10%]"
+          style={{
+            opacity: 0.48 + strength * 0.5,
+            background:
+              "radial-gradient(60% 50% at 30% 35%, color-mix(in srgb, currentColor 65%, #f472b6), transparent 60%), radial-gradient(55% 45% at 72% 60%, color-mix(in srgb, currentColor 55%, #a78bfa), transparent 62%), radial-gradient(50% 45% at 50% 25%, rgba(108, 196, 255, 0.45), transparent 65%), radial-gradient(circle at 20% 25%, #fff 1px, transparent 1.5px), radial-gradient(circle at 75% 32%, #fbcfe8 1.2px, transparent 1.8px), radial-gradient(circle at 58% 78%, #bae6fd 1px, transparent 1.5px)",
+            backgroundSize: "100% 100%, 100% 100%, 100% 100%, 48px 48px, 64px 64px, 54px 54px",
+          }}
+        />
+      )}
+      {kind === "clouds" && (
+        <div
+          className="bg-fx-aurora absolute -inset-[14%]"
+          style={{
+            opacity: 0.42 + strength * 0.52,
+            background:
+              "radial-gradient(75% 55% at 22% 72%, rgba(244, 114, 182, 0.42), transparent 65%), radial-gradient(80% 60% at 78% 68%, rgba(108, 196, 255, 0.38), transparent 68%), radial-gradient(65% 50% at 50% 38%, rgba(167, 139, 250, 0.34), transparent 65%)",
+            filter: "blur(18px)",
+          }}
+        />
+      )}
+      {kind === "ghostfibers" && (
+        <div
+          className="bg-fx-aurora absolute -inset-[8%]"
+          style={{
+            opacity: 0.4 + strength * 0.55,
+            background:
+              "repeating-linear-gradient(115deg, transparent 0px, transparent 14px, color-mix(in srgb, currentColor 24%, #f472b6) 15px, transparent 17px, transparent 32px, rgba(108, 196, 255, 0.22) 33px, transparent 35px), radial-gradient(70% 60% at 50% 50%, rgba(167, 139, 250, 0.28), transparent 70%)",
+          }}
+        />
+      )}
+      {kind === "crtwarp" && (
+        <div
+          className="absolute inset-0"
+          style={{
+            opacity: 0.45 + strength * 0.5,
+            background:
+              "repeating-linear-gradient(0deg, rgba(12, 9, 24, 0.55) 0px 2px, transparent 2px 4px), radial-gradient(80% 70% at 50% 50%, rgba(244, 114, 182, 0.32), rgba(108, 196, 255, 0.22) 55%, rgba(12, 9, 24, 0.85) 100%)",
+            boxShadow: "inset 0 0 42px rgba(244, 114, 182, 0.25)",
+          }}
+        />
+      )}
       {kind === "silk" && (
         <div
           className="absolute inset-0"
           style={{
-            opacity: 0.3 + strength * 0.65,
+            opacity: 0.36 + strength * 0.62,
             background:
-              "radial-gradient(120% 80% at 15% 20%, color-mix(in srgb, currentColor 42%, transparent), transparent 58%), radial-gradient(110% 90% at 85% 75%, color-mix(in srgb, currentColor 32%, #6366f1 24%), transparent 62%), repeating-linear-gradient(-28deg, color-mix(in srgb, currentColor 12%, transparent) 0px, transparent 22px, color-mix(in srgb, currentColor 8%, transparent) 44px)",
+              "radial-gradient(120% 80% at 15% 20%, color-mix(in srgb, currentColor 46%, #f472b6), transparent 58%), radial-gradient(110% 90% at 85% 75%, color-mix(in srgb, currentColor 38%, #6cc4ff 32%), transparent 62%), repeating-linear-gradient(-28deg, color-mix(in srgb, currentColor 14%, transparent) 0px, transparent 22px, color-mix(in srgb, #a78bfa 12%, transparent) 44px)",
           }}
         />
+      )}
+      {kind === "waves" && (
+        <div
+          className="bg-fx-aurora absolute -inset-[10%]"
+          style={{
+            opacity: 0.35 + strength * 0.62,
+            background:
+              "repeating-radial-gradient(circle at 20% 80%, color-mix(in srgb, currentColor 28%, #f472b6) 0px, transparent 36px, color-mix(in srgb, currentColor 22%, #6cc4ff) 72px), radial-gradient(90% 80% at 75% 20%, rgba(167, 139, 250, 0.32), transparent 65%)",
+          }}
+        />
+      )}
+      {kind === "letterglitch" && (
+        <div className="bg-fx-matrix absolute inset-0">
+          {columns.map((index) => (
+            <span key={index} style={{ "--i": index, "--delay": `${-(index % 5) * 0.55}s` }}>
+              U·P<br />E·T<br />✦·0<br />1·X<br />A·Z
+            </span>
+          ))}
+        </div>
       )}
       {kind === "iridescence" && (
         <div
           className="absolute inset-0"
           style={{
-            opacity: 0.32 + strength * 0.64,
+            opacity: 0.36 + strength * 0.62,
             background:
-              "conic-gradient(from 210deg at 50% 50%, color-mix(in srgb, currentColor 45%, #38bdf8), color-mix(in srgb, currentColor 35%, #f472b6), color-mix(in srgb, currentColor 40%, #a855f7), color-mix(in srgb, currentColor 45%, #34d399), color-mix(in srgb, currentColor 45%, #38bdf8))",
-            filter: "blur(28px)",
+              "conic-gradient(from 210deg at 50% 50%, color-mix(in srgb, currentColor 48%, #f472b6), color-mix(in srgb, currentColor 42%, #a78bfa), color-mix(in srgb, currentColor 45%, #6cc4ff), color-mix(in srgb, currentColor 38%, #f472b6))",
+            filter: "blur(26px)",
             transform: "scale(1.15)",
           }}
         />

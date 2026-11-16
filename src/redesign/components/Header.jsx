@@ -49,12 +49,12 @@ const CursorMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-60 rounded-2xl border border-sky-400/20 bg-[#080d16]/95 p-2 text-white shadow-[0_24px_60px_-15px_rgba(0,0,0,0.95)] backdrop-blur-xl"
+        className="w-60 rounded-2xl border border-pink-400/20 bg-[#100b20]/96 p-2 text-white shadow-[0_24px_60px_-15px_rgba(6,4,16,0.95)] backdrop-blur-2xl"
       >
-        <DropdownMenuLabel className="px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-sky-300">
-          Website Aqua Cursor
+        <DropdownMenuLabel className="px-2 py-1 font-mono text-[13px] uppercase tracking-wider text-pink-200">
+          Website Cursor
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-sky-400/15" />
+        <DropdownMenuSeparator className="bg-pink-400/15" />
         <div className="grid grid-cols-2 gap-1 pt-1">
           {CURSOR_PRESETS.filter(([id]) => id !== "default").slice(0, 8).map(([id, label]) => {
             const preview = getCursorPreviewDataUrl(id, "#6cc4ff");
@@ -197,10 +197,10 @@ export const Header = () => {
             <div className="flex items-center gap-2">
               <Link
                 to="/dashboard"
-                className="group hidden h-9 items-center gap-2 rounded-full bg-gradient-to-r from-sky-300 via-sky-400 to-cyan-400 pl-3.5 pr-1.5 text-xs font-bold text-slate-950 shadow-[0_8px_24px_-6px_rgba(56,189,248,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-4px_rgba(56,189,248,0.9)] sm:inline-flex"
+                className="group hidden h-9 items-center gap-2 rounded-full bg-gradient-to-r from-pink-300 via-violet-300 to-sky-300 pl-3.5 pr-1.5 text-xs font-bold text-slate-950 shadow-[0_8px_24px_-6px_rgba(244,114,182,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-4px_rgba(108,196,255,0.85)] sm:inline-flex"
               >
                 <span>Dashboard</span>
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-slate-950 text-sky-300 transition-transform duration-200 group-hover:translate-x-0.5">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-slate-950 text-pink-300 transition-transform duration-200 group-hover:translate-x-0.5">
                   <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </Link>
@@ -210,17 +210,17 @@ export const Header = () => {
             <div className="flex items-center gap-1.5">
               <Link
                 to="/login"
-                className="hidden rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:text-sky-200 sm:inline-flex"
+                className="hidden rounded-full px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:text-pink-200 sm:inline-flex"
               >
                 Sign in
               </Link>
               <Link
                 to="/login"
                 data-testid="header-login-button"
-                className="group inline-flex h-9 items-center gap-2 rounded-full bg-gradient-to-r from-sky-300 via-sky-400 to-cyan-400 pl-3.5 pr-1.5 text-xs font-bold text-slate-950 shadow-[0_8px_26px_-6px_rgba(56,189,248,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-4px_rgba(56,189,248,0.9)]"
+                className="group inline-flex h-9 items-center gap-2 rounded-full bg-gradient-to-r from-pink-300 via-violet-300 to-sky-300 pl-3.5 pr-1.5 text-xs font-bold text-slate-950 shadow-[0_8px_26px_-6px_rgba(244,114,182,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_-4px_rgba(108,196,255,0.85)]"
               >
                 <span>Claim your page</span>
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-slate-950 text-sky-300 transition-transform duration-200 group-hover:translate-x-0.5">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-slate-950 text-pink-300 transition-transform duration-200 group-hover:translate-x-0.5">
                   <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </Link>
@@ -230,7 +230,7 @@ export const Header = () => {
           <button
             data-testid="theme-toggle"
             onClick={toggleTheme}
-            className="grid h-8 w-8 place-items-center rounded-full border border-sky-400/20 bg-white/[0.04] text-zinc-300 transition-all hover:border-sky-400/45 hover:bg-sky-400/10 hover:text-sky-200"
+            className="grid h-8 w-8 place-items-center rounded-full border border-pink-400/25 bg-white/[0.04] text-zinc-300 transition-all hover:border-pink-400/50 hover:bg-pink-400/10 hover:text-pink-200"
             aria-label="Toggle theme"
           >
             <span key={theme}>

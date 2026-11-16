@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Sparkles, Upload, X } from "lucide-react";
 import { toast } from "sonner";
-import { ChoiceChips, ColorRow, Field, Panel, SliderRow, ToggleRow, inputCls } from "../../../components/Controls";
+import { ChoiceChips, ColorRow, Field, Panel, SliderRow, ToggleRow, btnCls, ghostCls, inputCls } from "../../../components/Controls";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { CARD_ENTRANCES, CARD_LAYOUTS, FONT_OPTIONS, THEME_PRESETS } from "../../../lib/catalog";
 import { readFontDataUrl } from "./shared";
 
@@ -249,6 +250,22 @@ const applyThemePreset = (d, preset) => {
 
 export const CardTab = ({ p, up }) => {
   const fontInputRef = useRef();
+  const [entranceModalOpen, setEntranceModalOpen] = useState(false);
+  const currentLayoutIdx = Math.max(
+    0,
+    CARD_LAYOUTS.findIndex((item) => item.id === p.card.layout)
+  );
+  const activeLayoutObj = CARD_LAYOUTS[currentLayoutIdx] || CARD_LAYOUTS[0];
+  const activeEntranceObj =
+    CARD_ENTRANCES.find(([id]) => id === (p.card.entrance || "none")) || CARD_ENTRANCES[0];
+
+  const cycleLayout = (delta) => {
+    const nextIdx = (currentLayoutIdx + delta + CARD_LAYOUTS.length) % CARD_LAYOUTS.length;
+    const nextLayout = CARD_LAYOUTS[nextIdx];
+    up((d) => {
+      d.card.layout = nextLayout.id;
+    });
+  };
 
   const handleFontUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -316,18 +333,217 @@ export const CardTab = ({ p, up }) => {
         </div>
       </Panel>
 
-      <Panel title="Card Layout">
-        <ChoiceChips
-          testid="card-layout"
-          value={p.card.layout}
-          options={[
-            ["minimal", "Minimal"],
-            ["compact", "Compact"],
-            ["banner", "Banner"],
-            ["slideshow", "Slideshow"],
-          ]}
-          onChange={(v) => up((d) => { d.card.layout = v; })}
-        />
+      <Panel
+        title={`Card Layout Carousel · Layout: ${activeLayoutObj.code || String(currentLayoutIdx + 1).padStart(2, "0")}`}
+        desc="Cycle through Mono, Cover, Stereo, Crest, Portrait, and Bento (Default) with live wireframe previews."
+        testid="card-layout-carousel"
+      >
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_1fr] lg:items-center">
+          <div className="relative">
+            <LayoutWireframe id={activeLayoutObj.id} accent={p.card.accent} />
+            <div className="mt-2.5 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                data-testid="layout-carousel-prev"
+                onClick={() => cycleLayout(-1)}
+                className={ghostCls}
+              >
+                <ChevronLeft className="h-4 w-4" /> Prev
+              </button>
+              <span className="font-mono text-[13px] font-bold uppercase tracking-wider text-pink-300">
+                Layout: {activeLayoutObj.code || String(currentLayoutIdx + 1).padStart(2, "0")} · {activeLayoutObj.name}
+              </span>
+              <button
+                type="button"
+                data-testid="layout-carousel-next"
+                onClick={() => cycleLayout(1)}
+                className={ghostCls}
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full border border-pink-400/30 bg-pink-400/15 px-3 py-0.5 font-mono text-xs font-bold text-pink-200">
+                {activeLayoutObj.badge}
+              </span>
+              <h4 className="font-display text-lg font-bold text-white">{activeLayoutObj.name}</h4>
+            </div>
+            <ul className="space-y-1.5 text-xs text-zinc-300">
+              {(activeLayoutObj.bullets || []).map((b) => (
+                <li key={b} className="flex items-center gap-2">
+                  <Check className="h-3.5 w-3.5 shrink-0 text-pink-400" />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="pt-1">
+              <ChoiceChips
+                testid="card-layout"
+                value={p.card.layout}
+                options={CARD_LAYOUTS.map((l) => [l.id, l.name])}
+                onChange={(v) => up((d) => { d.card.layout = v; })}
+              />
+            </div>
+          </div>
+        </div>
+      </Panel>
+
+      <Panel
+        title="Entrance Animations"
+        desc="Choose how your profile card arrives and animates on screen — Normal tier or Premium Glow Wire & Circuit frames."
+        testid="card-entrance-panel"
+      >
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-pink-400/20 bg-[#0e0a1c] p-3">
+          <div>
+            <div className="font-mono text-[13px] font-bold uppercase tracking-wider text-pink-300">
+              Active Entrance: {activeEntranceObj[1]}
+            </div>
+            <div className="text-xs text-zinc-400">{activeEntranceObj[2]}</div>
+          </div>
+          <button
+            type="button"
+            data-testid="open-entrance-modal"
+            onClick={() => setEntranceModalOpen(true)}
+            className={btnCls}
+          >
+            <Sparkles className="h-4 w-4" /> Open Entrance Modal
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <div className="mb-2 font-mono text-[13px] font-semibold uppercase tracking-wider text-zinc-400">
+              Normal Tier
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {CARD_ENTRANCES.filter(([, , , tier]) => tier === "normal").map(([id, label, desc]) => {
+                const active = (p.card.entrance || "none") === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    data-testid={`card-entrance-${id}`}
+                    onClick={() => up((d) => { d.card.entrance = id; })}
+                    className={`group flex flex-col rounded-2xl border p-2.5 text-left transition-all ${
+                      active
+                        ? "border-pink-400 bg-pink-400/10 ring-1 ring-pink-400/35"
+                        : "border-white/[0.08] bg-[#0e0a1c] hover:border-pink-400/35"
+                    }`}
+                  >
+                    <MiniEntrancePreview id={id} />
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">{label}</span>
+                      {active && <Check className="h-3.5 w-3.5 text-pink-300" />}
+                    </div>
+                    <span className="mt-0.5 truncate text-[11px] text-zinc-400">{desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 font-mono text-[13px] font-semibold uppercase tracking-wider text-pink-300">
+              Premium Tier · Frame &amp; SVG Line Animations
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {CARD_ENTRANCES.filter(([, , , tier]) => tier === "premium").map(([id, label, desc]) => {
+                const active = (p.card.entrance || "none") === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    data-testid={`card-entrance-${id}`}
+                    onClick={() => up((d) => { d.card.entrance = id; })}
+                    className={`group flex flex-col rounded-2xl border p-2.5 text-left transition-all ${
+                      active
+                        ? "border-pink-400 bg-pink-400/15 ring-1 ring-pink-400/45"
+                        : "border-pink-400/20 bg-[#120c24] hover:border-pink-400/45"
+                    }`}
+                  >
+                    <MiniEntrancePreview id={id} />
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">{label}</span>
+                      <span className="rounded-full bg-pink-400/20 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-pink-200">
+                        PRO
+                      </span>
+                    </div>
+                    <span className="mt-0.5 truncate text-[11px] text-zinc-400">{desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <Dialog open={entranceModalOpen} onOpenChange={setEntranceModalOpen}>
+          <DialogContent className="max-h-[88dvh] max-w-3xl overflow-y-auto rounded-3xl border border-pink-400/25 bg-[#0e0a1c] p-6 text-white">
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl font-bold">
+                Entrance Animations
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-2 space-y-5">
+              <div>
+                <div className="mb-2 font-mono text-[13px] font-bold uppercase tracking-wider text-zinc-400">
+                  Normal Tier (None, Snap In, Sweep, Center Scale, Deal, Ripple)
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {CARD_ENTRANCES.filter(([, , , tier]) => tier === "normal").map(([id, label, desc]) => {
+                    const active = (p.card.entrance || "none") === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => {
+                          up((d) => { d.card.entrance = id; });
+                          setEntranceModalOpen(false);
+                        }}
+                        className={`flex flex-col rounded-2xl border p-3 text-left transition-all ${
+                          active ? "border-pink-400 bg-pink-400/15" : "border-white/10 bg-[#140f28] hover:border-pink-400/40"
+                        }`}
+                      >
+                        <MiniEntrancePreview id={id} />
+                        <span className="mt-2 text-xs font-bold text-white">{label}</span>
+                        <span className="text-[11px] text-zinc-400">{desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <div className="mb-2 font-mono text-[13px] font-bold uppercase tracking-wider text-pink-300">
+                  Premium Tier (Glow Wire, Signal, Circuit, Blueprint, Lock)
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {CARD_ENTRANCES.filter(([, , , tier]) => tier === "premium").map(([id, label, desc]) => {
+                    const active = (p.card.entrance || "none") === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => {
+                          up((d) => { d.card.entrance = id; });
+                          setEntranceModalOpen(false);
+                        }}
+                        className={`flex flex-col rounded-2xl border p-3 text-left transition-all ${
+                          active ? "border-pink-400 bg-pink-400/15" : "border-pink-400/20 bg-[#140f28] hover:border-pink-400/50"
+                        }`}
+                      >
+                        <MiniEntrancePreview id={id} />
+                        <span className="mt-2 text-xs font-bold text-white">{label}</span>
+                        <span className="text-[11px] text-zinc-400">{desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </Panel>
 
       <Panel

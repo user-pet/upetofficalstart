@@ -4,7 +4,7 @@ import { iconUrl } from "../lib/catalog";
 import { discordBadgeLabels } from "../../shared/discordProfile";
 
 const hexA = (hex, a) => {
-  const h = (hex || "#000000").replace("#", "");
+  const h = (hex || "#0d0a1a").replace("#", "");
   const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 };

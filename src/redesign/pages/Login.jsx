@@ -70,13 +70,13 @@ export default function Login() {
   return (
     <section className="relative flex min-h-[82vh] items-center justify-center px-4 pb-16 pt-28">
       <div
-        className="relative w-full max-w-[430px] overflow-hidden rounded-[24px] border border-sky-400/20 bg-[#080d17]/95 p-7 shadow-[0_32px_90px_-24px_rgba(2,8,23,0.95),0_0_50px_-20px_rgba(56,189,248,0.28)] backdrop-blur-xl sm:p-8"
+        className="relative w-full max-w-[430px] overflow-hidden rounded-[24px] border border-pink-400/25 bg-[#100b22]/95 p-7 shadow-[0_32px_90px_-24px_rgba(6,4,18,0.95),0_0_50px_-20px_rgba(244,114,182,0.3)] backdrop-blur-xl sm:p-8"
         data-testid="login-box"
       >
         {claimHandle && (
           <div className="mb-4 flex justify-center">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/30 bg-sky-400/10 px-3.5 py-1 font-mono text-xs text-sky-200">
-              <Sparkles className="h-3.5 w-3.5 text-sky-400" />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-pink-400/30 bg-pink-400/10 px-3.5 py-1 font-mono text-xs text-pink-200">
+              <Sparkles className="h-3.5 w-3.5 text-pink-400" />
               <span>
                 Claiming <strong>user.pet/{claimHandle}</strong>
               </span>
@@ -86,21 +86,21 @@ export default function Login() {
 
         <div className="text-center">
           <h1 className="font-display text-2xl font-bold tracking-tight text-white">
-            Welcome to user<span className="text-sky-400">.pet</span>
+            Welcome to user<span className="text-pink-400">.pet</span>
           </h1>
           <p className="mt-1.5 text-xs text-zinc-400">
-            Sign in or claim your interactive 60fps profile page
+            Sign in or claim your interactive profile page
           </p>
         </div>
 
         {/* Segmented Sign Up / Sign In Switcher */}
-        <div className="mt-6 grid grid-cols-2 rounded-full border border-sky-400/15 bg-[#050810] p-1">
+        <div className="mt-6 grid grid-cols-2 rounded-full border border-pink-400/20 bg-[#0b0818] p-1">
           <button
             type="button"
             onClick={() => setCreating(true)}
             className={`rounded-full py-2 text-xs font-bold transition-all duration-200 ${
               creating
-                ? 'bg-gradient-to-r from-sky-300 via-sky-400 to-cyan-400 text-slate-950 shadow-[0_4px_14px_rgba(56,189,248,0.45)]'
+                ? 'bg-gradient-to-r from-pink-300 via-violet-300 to-sky-300 text-slate-950 shadow-[0_4px_14px_rgba(244,114,182,0.45)]'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
@@ -111,7 +111,7 @@ export default function Login() {
             onClick={() => setCreating(false)}
             className={`rounded-full py-2 text-xs font-bold transition-all duration-200 ${
               !creating
-                ? 'bg-gradient-to-r from-sky-300 via-sky-400 to-cyan-400 text-slate-950 shadow-[0_4px_14px_rgba(56,189,248,0.45)]'
+                ? 'bg-gradient-to-r from-pink-300 via-violet-300 to-sky-300 text-slate-950 shadow-[0_4px_14px_rgba(244,114,182,0.45)]'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
@@ -232,7 +232,7 @@ export default function Login() {
           <button
             data-testid="login-submit-button"
             disabled={busy}
-            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-300 via-sky-400 to-cyan-400 px-5 text-xs font-bold text-slate-950 shadow-[0_8px_24px_-6px_rgba(56,189,248,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-4px_rgba(56,189,248,0.9)] disabled:opacity-50"
+            className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-300 via-violet-300 to-sky-300 px-5 text-xs font-bold text-slate-950 shadow-[0_8px_24px_-6px_rgba(244,114,182,0.65)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-4px_rgba(108,196,255,0.85)] disabled:opacity-50"
           >
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
             <span>{creating ? 'Create Account' : 'Sign In'}</span>

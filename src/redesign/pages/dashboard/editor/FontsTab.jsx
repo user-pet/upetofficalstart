@@ -169,7 +169,7 @@ export const FontsTab = ({ p, up }) => {
             />
           </Field>
 
-          <Field label="Bio Formatting (Noiz Style)">
+          <Field label="Bio Formatting">
             <ChoiceChips
               testid="card-bio-style"
               value={p.card.bioStyle || "normal"}
@@ -208,7 +208,7 @@ export const FontsTab = ({ p, up }) => {
           className="mt-4 rounded-2xl border border-white/[0.08] bg-[#060609] p-4"
           style={{ fontFamily: fontStyle(p.card.font, p.card.customFontUrl) }}
         >
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-widest text-zinc-500">
+          <div className="flex items-center justify-between font-mono text-[13px] uppercase tracking-wider text-zinc-400">
             <span>Live Typography Specimen</span>
             <span>Font: {p.card.font}</span>
           </div>

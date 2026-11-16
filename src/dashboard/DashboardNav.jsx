@@ -1,9 +1,10 @@
 import React from 'react';
-import { BarChart3, LayoutDashboard, LogOut, Moon, Palette, Settings, Sun } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Link2, LogOut, Moon, Palette, Settings, Sun } from 'lucide-react';
 import styles from './DashboardShell.module.css';
 
 export const dashboardDestinations = [
   { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
+  { label: 'Links', path: '/customize?tab=content', icon: Link2 },
   { label: 'Customize', path: '/customize', icon: Palette },
   { label: 'Analytics', path: '/analytics', icon: BarChart3 },
   { label: 'Settings', path: '/settings', icon: Settings },

@@ -310,7 +310,13 @@ export function StoreProvider({ children }) {
     }
     unmarkAccountDeleted(rawUsername);
     const email = rawEmail || `${rawUsername}@user.pet`;
-    const role = rawObj.role === 'member' ? 'member' : 'founder';
+    const approved = isApprovedFounder({
+      uid: `local-user-${rawUsername}`,
+      email,
+      username: rawUsername,
+      isLocalDev: true,
+    });
+    const role = approved ? 'founder' : 'member';
 
     let initialProfile = null;
     let hasSavedLocal = false;
@@ -688,7 +694,9 @@ export function StoreProvider({ children }) {
         profile: {
           ...current.profile,
           views: analytics.views,
-          viewHistory: Object.entries(analytics.byDay || {}).map(([day, count]) => ({ day, count })),
+          viewHistory: Object.entries(analytics.byDay || {})
+            .sort(([dayA], [dayB]) => String(dayA).localeCompare(String(dayB)))
+            .map(([day, count]) => ({ day, count })),
         },
       } : current);
     })();

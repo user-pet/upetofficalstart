@@ -23,7 +23,16 @@ const Donate = lazyWithRetry(() => import('./pages/Donate'), 'donate');
 
 const dashboardImports = {
   overview: () => import('./pages/dashboard/Overview'),
+  share: () => import('./pages/dashboard/Overview'),
+  links: () => import('./pages/dashboard/Editor'),
   editor: () => import('./pages/dashboard/Editor'),
+  profile: () => import('./pages/dashboard/Editor'),
+  music: () => import('./pages/dashboard/Editor'),
+  widgets: () => import('./pages/dashboard/Editor'),
+  pages: () => import('./pages/dashboard/Editor'),
+  games: () => import('./pages/dashboard/Editor'),
+  analytics: () => import('./pages/dashboard/Overview'),
+  templates: () => import('./pages/dashboard/Presets'),
   profiles: () => import('./pages/dashboard/Presets'),
   badges: () => import('./pages/dashboard/Badges'),
   leaderboard: () => import('./pages/dashboard/Leaderboard'),
@@ -146,6 +155,7 @@ function App() {
             <Route path="/biz/:id" element={<Navigate to="/" replace />} />
             <Route path="/:username/shop/chat/:threadId" element={<RetiredProfilePage />} />
             <Route path="/:username/shop" element={<RetiredProfilePage />} />
+            <Route path="/:username/donate" element={<Shell><Donate /></Shell>} />
             <Route path="/:username" element={<ProfilePage />} />
           </Routes></Suspense></RouteErrorBoundary>
         </BrowserRouter>

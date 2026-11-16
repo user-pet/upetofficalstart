@@ -106,11 +106,11 @@ export default function Donate() {
           <div>
             <h1 className="font-display text-4xl font-extrabold tracking-tight sm:text-6xl lg:leading-[1.03]">
               Keep <span className="text-primary">user.pet</span> fast, independent, and{" "}
-              <span className="font-serif italic font-normal text-foreground/90">human-crafted.</span>
+              <span className="font-serif italic font-normal text-foreground/90">built with care.</span>
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              We don’t run ads, sell visitor data, or lock expressive profile effects behind predatory paywalls.
-              Community donations fund our global media edge and unlock the permanent{" "}
+              No ads, no selling visitor data, and no paywalls around the profile tools people enjoy.
+              Contributions help cover our media hosting and unlock the permanent{" "}
               <span className="font-semibold text-foreground">Donor badge</span> on your profile.
             </p>
           </div>
@@ -344,8 +344,8 @@ export default function Donate() {
             </div>
             <div className="rounded-xl border border-white/[0.07] bg-card/40 p-3">
               <Zap className="mx-auto h-4 w-4 text-primary" />
-              <div className="mt-1 font-mono text-[11px] font-semibold">60fps Shaders</div>
-              <div className="text-[10px] text-muted-foreground">ReactBits powered</div>
+              <div className="mt-1 font-mono text-[13px] font-semibold">Live Shaders</div>
+              <div className="text-xs text-muted-foreground">ReactBits powered</div>
             </div>
             <div className="rounded-xl border border-white/[0.07] bg-card/40 p-3">
               <Coffee className="mx-auto h-4 w-4 text-primary" />

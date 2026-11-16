@@ -136,4 +136,25 @@ test('B1–B6 & M1–M12: all mobile display fixes and UI bug fixes are present 
   assert.match(donateSource, /Currently Available/);
   assert.match(wellKnownDiscord, /normalizeDiscordDomainCode/);
   assert.match(effectsTab, /CURSOR_FX_LIST/);
+
+  const founderGateSource = readFileSync(new URL('../src/app/FounderGate.jsx', import.meta.url), 'utf8');
+  const modviewPolicySource = readFileSync(new URL('../server/modviewPolicy.js', import.meta.url), 'utf8');
+  const accountStoreSource = readFileSync(new URL('../src/data/accountStore.js', import.meta.url), 'utf8');
+  const catalogSource = readFileSync(new URL('../src/redesign/lib/catalog.js', import.meta.url), 'utf8');
+  const profileModelSource = readFileSync(new URL('../src/redesign/lib/profileModel.js', import.meta.url), 'utf8');
+  const homeSource = readFileSync(new URL('../src/redesign/pages/Home.jsx', import.meta.url), 'utf8');
+  const editorSource = readFileSync(new URL('../src/redesign/pages/dashboard/Editor.jsx', import.meta.url), 'utf8');
+
+  assert.match(founderGateSource, /waybetterperson@gmail\.com/);
+  assert.match(modviewPolicySource, /waybetterperson@gmail\.com/);
+  assert.match(accountStoreSource, /\/api\/account/);
+  assert.doesNotMatch(accountStoreSource, /getDocs\(query\(collection\(firestore,\s*'directoryProfiles'\)/);
+  assert.doesNotMatch(catalogSource, /Noiz/i);
+  assert.doesNotMatch(homeSource, /60fps/i);
+  assert.doesNotMatch(homeSource, /1-char/i);
+  assert.match(homeSource, /hero-claim-box/);
+  assert.match(homeSource, /get-paid-section/);
+  assert.match(profileModelSource, /layout:\s*'bento'/);
+  assert.match(profileCard, /bento-native-lyrics/);
+  assert.match(editorSource, /\["links",\s*"Links"/);
 });

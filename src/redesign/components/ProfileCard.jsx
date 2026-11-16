@@ -127,7 +127,50 @@ const SideLyrics = ({ audio, currentTime, accent, side, cardWidth = 440 }) => {
   </aside>;
 };
 
-const AudioBar = ({ audio, accent, cardWidth = 440 }) => {
+const BentoLyricsTile = ({ audio, currentTime, accent }) => {
+  const lines = audio.lyrics?.lines || [];
+  if (!audio.lyrics?.enabled || !lines.length) return null;
+  const active = activeLyricIndex(lines, currentTime);
+  const waiting = waitingForLyric(lines, currentTime);
+  const currentLine = active >= 0 ? lines[active] : lines[0];
+  const nextLine = active >= 0 ? lines[active + 1] : lines[1];
+  return (
+    <div
+      data-testid="bento-native-lyrics"
+      className="mt-2.5 rounded-2xl border border-white/[0.08] bg-white/[0.035] px-4 py-3 text-left"
+      style={{ textAlign: audio.lyrics.alignment || "left" }}
+    >
+      <div className="mb-1 flex items-center justify-between font-mono text-[11px] uppercase tracking-wider text-white/45">
+        <span className="inline-flex items-center gap-1.5">
+          <Captions className="h-3.5 w-3.5" style={{ color: accent }} />
+          Synced Lyrics
+        </span>
+        <span>Live in grid</span>
+      </div>
+      {waiting ? (
+        <LyricWaiting accent={accent} />
+      ) : (
+        <div className="space-y-1">
+          <p
+            key={currentLine?.id || "line-0"}
+            className="break-words text-sm font-bold leading-snug text-white transition-all duration-300"
+            style={{
+              color: audio.lyrics?.activeColor || "#ffffff",
+              textShadow: audio.lyrics?.textEffect === "glow" ? `0 0 14px ${accent}` : undefined,
+            }}
+          >
+            {currentLine?.text}
+          </p>
+          {nextLine && (
+            <p className="truncate text-xs text-white/40">{nextLine.text}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AudioBar = ({ audio, accent, cardWidth = 440, isBento = false }) => {
   const ref = useRef(null);
   const host = useRef(null);
   const [playing, setPlaying] = useState(false);
@@ -154,23 +197,23 @@ const AudioBar = ({ audio, accent, cardWidth = 440 }) => {
     if (a.paused) a.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
     else { a.pause(); setPlaying(false); }
   };
-  const placement = audio.playerPlacement || "card";
+  const placement = isBento ? "card" : (audio.playerPlacement || "card");
   const floating = placement !== "card";
-  const positionClass = placement === "left" ? "left-4 sm:left-6" : "right-4 sm:right-6";
   const compactButton = placement === "button";
-  const mobileSideLyrics = mobileViewport && audio.lyrics?.enabled && ["left", "right"].includes(audio.lyrics?.display);
+  const mobileSideLyrics = !isBento && mobileViewport && audio.lyrics?.enabled && ["left", "right"].includes(audio.lyrics?.display);
   const expandedAvailable = Boolean(audio.expandedEnabled) || mobileSideLyrics;
   const openExpanded = () => { if (expandedAvailable) setPlayerOpen(true); };
   const playerEffect = audio.playerEffect || "none";
   const playerOpacity = audio.playerOpacity ?? 0.3;
+  const playerBgHex = audio.playerBackground && audio.playerBackground !== "#000000" ? audio.playerBackground : "#0d0a1a";
   const playerStyle = {
-    backgroundColor: hexA(audio.playerBackground || "#000000", playerOpacity),
-    backgroundImage: playerEffect === "gradient" ? `linear-gradient(135deg, ${hexA(audio.playerBackground || "#000000", playerOpacity)}, ${hexA(accent, playerOpacity)})` : playerEffect === "scanlines" ? `repeating-linear-gradient(0deg, transparent 0 3px, ${hexA("#ffffff", 0.08)} 4px, transparent 5px)` : undefined,
+    backgroundColor: hexA(playerBgHex, playerOpacity),
+    backgroundImage: playerEffect === "gradient" ? `linear-gradient(135deg, ${hexA(playerBgHex, playerOpacity)}, ${hexA(accent, playerOpacity)})` : playerEffect === "scanlines" ? `repeating-linear-gradient(0deg, transparent 0 3px, ${hexA("#ffffff", 0.08)} 4px, transparent 5px)` : undefined,
     border: audio.playerBorder === false ? "none" : `1px solid ${hexA("#ffffff", 0.1)}`,
     borderRadius: `${audio.playerRadius ?? 12}px`,
     backdropFilter: `blur(${(audio.playerBlur || 0) + (playerEffect === "glass" ? 12 : 0)}px)`,
     WebkitBackdropFilter: `blur(${(audio.playerBlur || 0) + (playerEffect === "glass" ? 12 : 0)}px)`,
-    boxShadow: playerEffect === "glow" ? `0 0 24px ${hexA(accent, 0.45)}` : "0 12px 32px rgba(0,0,0,.24)",
+    boxShadow: playerEffect === "glow" ? `0 0 24px ${hexA(accent, 0.45)}` : "0 12px 32px rgba(6,4,16,.28)",
     color: audio.playerTextColor || "#ffffff",
     width: `${audio.playerScale ?? 100}%`,
     maxWidth: "100%",
@@ -182,16 +225,16 @@ const AudioBar = ({ audio, accent, cardWidth = 440 }) => {
       {audio.playerShowCover !== false && audio.cover ? <img src={audio.cover} alt="" className="rounded-full object-cover" style={{ width: compact ? 48 : coverSize, height: compact ? 48 : coverSize }} /> : <span className="grid place-items-center rounded-full border border-white/20" style={{ width: compact ? 48 : coverSize, height: compact ? 48 : coverSize }}><Music2 className="h-4 w-4" style={{ color: audio.playerTextColor || "#ffffff" }} /></span>}
     </button>
     {!compact && <button type="button" onClick={openExpanded} disabled={!expandedAvailable} className={`min-w-0 flex-1 text-left ${expandedAvailable ? "cursor-pointer" : "cursor-default"}`} style={{ color: audio.playerTextColor || "#ffffff" }}><span className="flex items-center gap-1 truncate text-sm font-semibold"><span className="truncate">{audio.title || "Untitled"}</span>{audio.lyrics?.enabled && <Captions className="h-3.5 w-3.5 shrink-0" />}</span>{audio.playerShowArtist !== false && <span className="block truncate text-[11px] opacity-65">{audio.artist}</span>}</button>}
-    <button data-testid="profile-audio-toggle" onClick={toggle} aria-label={playing ? "Pause" : "Play"} className={`grid shrink-0 place-items-center rounded-full text-black ${isFloating ? "h-9 w-9" : "h-8 w-8"}`} style={{ background: accent }}>{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
+    <button data-testid="profile-audio-toggle" onClick={toggle} aria-label={playing ? "Pause" : "Play"} className={`grid shrink-0 place-items-center rounded-full text-slate-950 ${isFloating ? "h-9 w-9" : "h-8 w-8"}`} style={{ background: accent }}>{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button>
     {audio.playerShowProgress && !compact && <div data-testid="profile-audio-progress" className="absolute inset-x-3 bottom-0"><AudioSeek audio={audio} value={currentTime} max={duration} onChange={(value) => { if (ref.current) ref.current.currentTime = value; }} className="w-full" /></div>}
   </div>;
   return <>
     <span ref={host} className="hidden" />
     <audio ref={ref} src={audio.src} preload="metadata" loop={audio.loop} autoPlay={audio.autoplay} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onLoadedMetadata={() => setDuration(ref.current?.duration || 0)} onDurationChange={() => setDuration(ref.current?.duration || 0)} onTimeUpdate={() => setCurrentTime(ref.current?.currentTime || 0)} />
-    {floating ? <ProfileFloatingLayer root={overlayRoot} side={placement === "left" ? "left" : "right"} compact={compactButton} data-testid="profile-audio"><div className={`flex w-full ${placement === "left" ? "justify-start" : "justify-end"}`}>{playerControls({ compact: compactButton, isFloating: true })}</div></ProfileFloatingLayer> : <div data-testid="profile-audio" className="flex w-full min-w-0 justify-center">{playerControls()}</div>}
-    {popupVisible && <ProfileFloatingLayer root={overlayRoot} side={audio.popupSide} top data-testid="profile-audio-popup" style={{ animation: `${audio.popupSide === "right" ? "upet-audio-in-right" : "upet-audio-in-left"} .4s cubic-bezier(.2,.8,.2,1) both` }}><div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-[#111319]/95 p-3 shadow-2xl backdrop-blur-xl"><button type="button" onClick={() => { openExpanded(); setPopupVisible(false); }} disabled={!expandedAvailable} className={`min-w-0 flex-1 text-left ${expandedAvailable ? "cursor-pointer" : "cursor-default"}`}><span className="block truncate text-xs font-semibold text-white">{audio.title || "Untitled"}</span><span className="block truncate text-[11px] text-white/55">{audio.artist || "Now on this profile"}</span></button><button type="button" onClick={toggle} aria-label={playing ? "Pause" : "Play"} className="grid h-9 w-9 place-items-center rounded-full text-black" style={{ background: accent }}>{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button><button type="button" aria-label="Dismiss player popup" onClick={() => setPopupVisible(false)} className="text-white/55 hover:text-white"><X className="h-4 w-4" /></button></div></ProfileFloatingLayer>}
+    {floating ? <ProfileFloatingLayer root={overlayRoot} side={placement === "left" ? "left" : "right"} compact={compactButton} data-testid="profile-audio"><div className={`flex w-full ${placement === "left" ? "justify-start" : "justify-end"}`}>{playerControls({ compact: compactButton, isFloating: true })}</div></ProfileFloatingLayer> : <div data-testid="profile-audio" className="w-full min-w-0"><div className="flex w-full min-w-0 justify-center">{playerControls()}</div>{isBento && <BentoLyricsTile audio={audio} currentTime={currentTime} accent={accent} />}</div>}
+    {popupVisible && <ProfileFloatingLayer root={overlayRoot} side={audio.popupSide} top data-testid="profile-audio-popup" style={{ animation: `${audio.popupSide === "right" ? "upet-audio-in-right" : "upet-audio-in-left"} .4s cubic-bezier(.2,.8,.2,1) both` }}><div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-[#130e24]/95 p-3 shadow-2xl backdrop-blur-xl"><button type="button" onClick={() => { openExpanded(); setPopupVisible(false); }} disabled={!expandedAvailable} className={`min-w-0 flex-1 text-left ${expandedAvailable ? "cursor-pointer" : "cursor-default"}`}><span className="block truncate text-xs font-semibold text-white">{audio.title || "Untitled"}</span><span className="block truncate text-[11px] text-white/55">{audio.artist || "Now on this profile"}</span></button><button type="button" onClick={toggle} aria-label={playing ? "Pause" : "Play"} className="grid h-9 w-9 place-items-center rounded-full text-slate-950" style={{ background: accent }}>{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}</button><button type="button" aria-label="Dismiss player popup" onClick={() => setPopupVisible(false)} className="text-white/55 hover:text-white"><X className="h-4 w-4" /></button></div></ProfileFloatingLayer>}
     {playerOpen && expandedAvailable && typeof document !== "undefined" && createPortal(<LyricsSheet audio={audio} currentTime={currentTime} duration={duration} playing={playing} accent={accent} audioRef={ref} mobile={mobileViewport} onToggle={toggle} onClose={() => setPlayerOpen(false)} />, document.body)}
-    {overlayRoot && createPortal(<><SideLyrics audio={audio} currentTime={currentTime} accent={accent} side="left" cardWidth={cardWidth} /><SideLyrics audio={audio} currentTime={currentTime} accent={accent} side="right" cardWidth={cardWidth} /></>, overlayRoot)}
+    {!isBento && overlayRoot && createPortal(<><SideLyrics audio={audio} currentTime={currentTime} accent={accent} side="left" cardWidth={cardWidth} /><SideLyrics audio={audio} currentTime={currentTime} accent={accent} side="right" cardWidth={cardWidth} /></>, overlayRoot)}
   </>;
 };
 
@@ -214,9 +257,9 @@ const computeProfileUid = (username = "") => {
   return Math.max(3, hash + 3);
 };
 
-const Links = ({ p, compact }) => {
+const Links = ({ p, compact, bentoGrid = false }) => {
   const ls = p.linkStyle;
-  const accent = p.card.accent || "#6cc4ff";
+  const accent = p.card.accent || "#f472b6";
   if (!p.links.length) return null;
   if (compact || ls.mode === "icons") return (
     <div className="flex flex-wrap justify-center gap-2">
@@ -237,6 +280,37 @@ const Links = ({ p, compact }) => {
       ))}
     </div>
   );
+  if (bentoGrid) {
+    return (
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2" data-testid="bento-links-grid">
+        {p.links.map((l, idx) => {
+          const spanMode = l.span || "auto";
+          const isFull =
+            spanMode === "full" ||
+            (spanMode === "auto" && p.links.length % 2 === 1 && idx === p.links.length - 1);
+          return (
+            <a
+              key={l.id}
+              href={l.url}
+              target="_blank"
+              rel="noreferrer"
+              data-testid={`profile-link-${l.id}`}
+              data-bento-span={spanMode}
+              data-analytics-feature="Profile links"
+              className={`group relative flex items-center gap-3 overflow-hidden border border-white/[0.08] bg-white/[0.035] px-3.5 py-3 text-sm text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--link-accent)] hover:bg-white/[0.08] hover:shadow-[0_0_24px_-8px_var(--link-accent)] ${
+                isFull ? "sm:col-span-2" : "sm:col-span-1"
+              }`}
+              style={{ borderRadius: ls.radius, "--link-accent": accent }}
+            >
+              <LinkIcon l={l} ls={ls} accent={accent} />
+              <span className="min-w-0 flex-1 truncate text-left font-medium tracking-tight">{l.label || l.url}</span>
+              <ArrowUpRight className="h-3.5 w-3.5 shrink-0 opacity-35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-90" style={{ color: accent }} />
+            </a>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div className="space-y-2">
       {p.links.map((l) => (
@@ -603,16 +677,23 @@ const Body = ({ p }) => {
     );
   }
   if (layout === "bento") return (
-    <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2" data-testid="bento-card-grid">
       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 sm:col-span-2">
         <Identity p={p} align="left" avatarSize={74} />
       </div>
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3.5 sm:col-span-2">
-        <Links p={p} />
-      </div>
+      {p.links.length > 0 && (
+        <div className="sm:col-span-2">
+          <Links p={p} bentoGrid />
+        </div>
+      )}
       {(p.audio.src || p.audio.embedUrl) && (
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-3 sm:col-span-2">
-          <AudioBar audio={p.audio} accent={accent} cardWidth={p.card.width} />
+          <AudioBar audio={p.audio} accent={accent} cardWidth={p.card.width} isBento />
+        </div>
+      )}
+      {!p.audio.src && !p.audio.embedUrl && p.audio.lyrics?.enabled && p.audio.lyrics?.lines?.length > 0 && (
+        <div className="sm:col-span-2">
+          <BentoLyricsTile audio={p.audio} currentTime={0} accent={accent} />
         </div>
       )}
       <div className="sm:col-span-2">

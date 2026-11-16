@@ -10,7 +10,7 @@ const preventPreviewNavigation = (event) => {
 };
 
 export function PreviewFrame({ profile, view, onEnter, className = '', fitDesktop = true, fitPreview = false }) {
-  return <div className={`editor-preview-frame relative isolate overflow-hidden rounded-[1.35rem] border border-white/15 bg-black shadow-2xl ${className}`} onClickCapture={preventPreviewNavigation} onAuxClickCapture={preventPreviewNavigation} data-testid="editor-preview-frame">
+  return <div className={`editor-preview-frame relative isolate overflow-hidden rounded-[1.35rem] border border-white/15 bg-[#0c0918] shadow-2xl ${className}`} onClickCapture={preventPreviewNavigation} onAuxClickCapture={preventPreviewNavigation} data-testid="editor-preview-frame">
     {view === 'entry' ? <ProfileScene p={profile} className="h-full w-full"><EntryGate entry={profile.entry} accent={profile.card.accent} cardFont={profile.card.font} customFontUrl={profile.card.customFontUrl} onEnter={onEnter} /></ProfileScene> : <ProfileScene p={profile} scrollable fitDesktop={fitDesktop} fitPreview={fitPreview} className="h-full w-full" />}
   </div>;
 }
@@ -34,11 +34,11 @@ export default function EditorPreview({ tab }) {
 
   return <div className="order-last min-w-0 rounded-2xl border border-primary/15 bg-background/40 p-3 xl:sticky xl:top-6 xl:z-20 xl:w-full xl:border-0 xl:bg-transparent xl:p-0" data-testid="editor-preview">
     <button type="button" onClick={() => setMobileOpen((open) => !open)} className="flex w-full items-center gap-3 text-left xl:hidden" aria-expanded={mobileOpen}>
-      <span className="min-w-0 flex-1"><span className="block text-xs font-bold uppercase tracking-[.2em]">Live preview</span><span className="mt-1 block truncate font-mono text-[11px] text-muted-foreground">user.pet/{user.username}</span></span>
-      <span role="status" className={`rounded-full px-2.5 py-1 text-[10px] font-medium ${saveState === 'error' ? 'bg-red-500/15 text-red-400' : 'bg-primary/10 text-primary'}`}>{status}</span>
+      <span className="min-w-0 flex-1"><span className="block text-[13px] font-bold uppercase tracking-[.16em]">Live preview</span><span className="mt-1 block truncate font-mono text-xs text-muted-foreground">user.pet/{user.username}</span></span>
+      <span role="status" className={`rounded-full px-2.5 py-1 text-xs font-medium ${saveState === 'error' ? 'bg-red-500/15 text-red-400' : 'bg-primary/10 text-primary'}`}>{status}</span>
       <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${mobileOpen ? 'rotate-180' : ''}`} />
     </button>
-    <div className="mb-3 hidden flex-wrap items-center justify-between gap-2 xl:flex"><div><div className="text-xs font-bold uppercase tracking-[.2em]">Live preview</div><div className="mt-1 font-mono text-[11px] text-muted-foreground">user.pet/{user.username}</div></div><span role="status" className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${saveState === 'error' ? 'bg-red-500/15 text-red-400' : 'bg-primary/10 text-primary'}`}>{status}</span></div>
+    <div className="mb-3 hidden flex-wrap items-center justify-between gap-2 xl:flex"><div><div className="text-[13px] font-bold uppercase tracking-[.16em]">Live preview</div><div className="mt-1 font-mono text-xs text-muted-foreground">user.pet/{user.username}</div></div><span role="status" className={`rounded-full px-2.5 py-1 text-xs font-medium ${saveState === 'error' ? 'bg-red-500/15 text-red-400' : 'bg-primary/10 text-primary'}`}>{status}</span></div>
     <div className={`${mobileOpen ? 'block' : 'hidden'} mt-3 xl:mt-0 xl:block`}>
       <div className="mb-3 flex items-center justify-between gap-2"><ViewSwitch view={view} setView={setView} /><button type="button" data-testid="preview-expand" onClick={() => setExpanded(true)} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold hover:bg-primary/10 ${sideLyrics ? 'border-primary bg-primary/10 text-primary shadow-[0_0_20px_hsl(var(--primary)/.16)]' : ''}`}><Maximize2 className="h-3.5 w-3.5" />{sideLyrics ? 'Lyric placement' : 'Expand'}</button></div>
       {sideLyrics && !expanded && <div className="mb-3 rounded-xl border border-primary/20 bg-primary/[.06] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">Side lyrics use desktop background space. Mobile visitors see them in the expanded player.</div>}

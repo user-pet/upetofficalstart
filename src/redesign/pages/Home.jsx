@@ -1,24 +1,29 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowRight,
   ArrowUpRight,
+  Captions,
   Check,
+  CheckCircle2,
   Copy,
   Crown,
   Eye,
   Hash,
+  Heart,
   Link2,
+  Loader2,
   MousePointerClick,
   Music2,
-  PawPrint,
+  Palette,
   ShieldCheck,
   Sparkles,
-  Type,
   Volume2,
-  Wand2,
+  XCircle,
 } from 'lucide-react';
 import { useStore } from '../lib/store';
+import { normalizeUsername } from '../../shared/username';
 import { Avatar, BadgeIcon, BackgroundFx, FxText, isVideoMedia } from '../components/ProfileBits';
 import { setGlobalSiteCursor } from '../components/SiteCursor';
 import {
@@ -42,8 +47,8 @@ const handleTiltMove = (event) => {
   const y = event.clientY - rect.top;
   const px = (x / rect.width) * 100;
   const py = (y / rect.height) * 100;
-  const ry = ((x / rect.width) - 0.5) * 8;
-  const rx = (0.5 - (y / rect.height)) * 8;
+  const ry = ((x / rect.width) - 0.5) * 6;
+  const rx = (0.5 - (y / rect.height)) * 6;
   el.style.setProperty('--mx', `${px.toFixed(1)}%`);
   el.style.setProperty('--my', `${py.toFixed(1)}%`);
   el.style.setProperty('--rx', `${rx.toFixed(2)}deg`);
@@ -56,21 +61,28 @@ const handleTiltLeave = (event) => {
   el.style.setProperty('--ry', '0deg');
 };
 
+const revealProps = (reducedMotion, delay = 0) => ({
+  initial: reducedMotion ? false : { opacity: 0, y: 22 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.16 },
+  transition: { duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] },
+});
+
 const TopProfile = ({ entry, slot }) => {
-  const accent = entry.card?.accent || '#6cc4ff';
+  const accent = entry.card?.accent || '#f472b6';
   const image =
     (entry.card?.layout === 'banner' ? previewImage(entry.banner, 520) : '') ||
     previewImage(entry.background, 520);
   const uidNum = entry.username === 'dome' || entry.username === 'lamp' ? 1 : slot + 1;
   return (
-    <Link
+      <Link
       to={`/${entry.username}`}
       data-testid={`top-profile-${slot}`}
       aria-label={`View ${entry.displayName}'s profile`}
       className={styles.profileCard}
       onMouseMove={handleTiltMove}
       onMouseLeave={handleTiltLeave}
-      style={{ '--profile-accent': accent, '--profile-bg': entry.card?.bgColor || '#070c16' }}
+      style={{ '--profile-accent': accent, '--profile-bg': entry.card?.bgColor || '#0f0b1d' }}
     >
       <div className={styles.profileImage} aria-hidden="true">
         {image && (
@@ -106,7 +118,7 @@ const TopProfile = ({ entry, slot }) => {
           ))}
         </div>
         <p className={styles.profileBio}>
-          {entry.bio || 'Interactive 60fps profile crafted on user.pet.'}
+          {entry.bio || 'Interactive Bento profile crafted on user.pet.'}
         </p>
         <div className={styles.profileBottom}>
           <span>
@@ -123,90 +135,139 @@ const TopProfile = ({ entry, slot }) => {
   );
 };
 
-const ProfilePlaceholder = () => (
-  <div className={styles.profilePlaceholder} aria-hidden="true">
-    <span>Featured profile</span>
-    <div className={styles.placeholderAvatar} />
-    <div className={styles.placeholderLine} />
-    <div className={styles.placeholderLineShort} />
-    <div className={styles.placeholderButton} />
-  </div>
-);
-
-const rotationDelay = () => 180000 + Math.floor(Math.random() * 120001);
-const pickProfiles = (profiles) => {
-  const pool = [...profiles];
-  for (let index = pool.length - 1; index > 0; index -= 1) {
-    const next = Math.floor(Math.random() * (index + 1));
-    [pool[index], pool[next]] = [pool[next], pool[index]];
-  }
-  return pool.slice(0, 3);
-};
-
 const SHADER_PRESETS = [
-  ['aurora', 'Aurora WebGL'],
-  ['hyperspeed', 'Hyperspeed'],
+  ['aurora', 'Aurora'],
   ['iridescence', 'Iridescence'],
-  ['silk', 'Silk Shader'],
+  ['silk', 'Silk'],
+  ['hyperspeed', 'Hyperspeed'],
+  ['waves', 'Waves'],
   ['dotgrid', 'Dot Grid'],
-  ['matrix', 'Matrix Rain'],
 ];
 
-export const HeroPreview = ({ user }) => {
-  const [previewTab, setPreviewTab] = useState('profile');
-  const [activeShader, setActiveShader] = useState('aurora');
-  const [activeFont, setActiveFont] = useState('geist');
+const HERO_CURSORS = [
+  ['neon-arrow', 'Neon Arrow'],
+  ['cyber-ring', 'Cyber Ring'],
+  ['cat', 'Neko Paw'],
+  ['star', 'Sparkle Star'],
+];
 
+const BENEFIT_HOOKS = [
+  {
+    id: 'look',
+    kicker: '01 · LOOK',
+    title: 'Make it yours',
+    desc: 'Find the colors, type, and details that feel right.',
+    detail: 'Try a moving background, choose a font, and add a custom cursor—or bring in a font of your own.',
+    icon: Palette,
+  },
+  {
+    id: 'sound',
+    kicker: '02 · SOUND',
+    title: 'Bring the soundtrack',
+    desc: 'Add a song and let the lyrics follow along.',
+    detail: 'Share a track you love, with synced lyrics right on your page.',
+    icon: Music2,
+  },
+  {
+    id: 'presence',
+    kicker: '03 · PRESENCE',
+    title: 'Stay connected',
+    desc: 'Let people find you where you already hang out.',
+    detail: 'Show your Discord profile and connect a verified name.user.pet subdomain.',
+    icon: ShieldCheck,
+  },
+];
+
+const FOUNDER_TEAM_SHOWCASE = [
+  {
+    username: 'lamp',
+    displayName: 'Lamp',
+    roleTag: 'FOUNDER · THE STARTER',
+    subdomain: 'lamp.user.pet',
+    bio: 'The one who got it all started. Lamp is a general founder and a little bit of everything around here.',
+    badges: ['founder', 'verified', 'staff', 'og'],
+    accent: '#c084fc',
+  },
+  {
+    username: 'dome',
+    displayName: 'Dome',
+    roleTag: 'MAIN FOUNDER · SOCIAL MEDIA',
+    subdomain: 'dome.user.pet',
+    bio: 'Main founder and social media manager, keeping the community connected and sharing what’s new.',
+    badges: ['founder', 'verified', 'staff', 'og'],
+    accent: '#f472b6',
+  },
+  {
+    username: 'bee',
+    displayName: 'Bee',
+    roleTag: 'DEVELOPER · OWNER · FOUNDER',
+    subdomain: 'bee.user.pet',
+    bio: 'Developer, owner, and founder of user.pet—building the site and shaping what comes next.',
+    badges: ['founder', 'verified', 'staff', 'og'],
+    accent: '#6cc4ff',
+  },
+];
+
+export const HeroPreview = ({
+  user,
+  previewHandle = 'dome',
+  activeShader = 'aurora',
+  setActiveShader,
+  activeFont = 'geist',
+  setActiveFont,
+  activeCursor = 'neon-arrow',
+  onSelectCursor,
+}) => {
+  const [previewTab, setPreviewTab] = useState('profile');
   const profile = user?.profile;
-  const banner =
-    (profile?.card?.layout === 'banner' ? previewImage(profile?.media?.banner, 640) : '') ||
-    previewImage(profile?.media?.background, 640);
-  const links = profile?.links?.slice(0, 3) || [];
-  const accent = profile?.card?.accent || '#6cc4ff';
+  const links = profile?.links?.slice(0, 3) || [
+    { id: '1', label: 'Discord Community', span: 'half' },
+    { id: '2', label: 'Playlist & Tracks', span: 'half' },
+    { id: '3', label: `Support @${previewHandle}`, span: 'full' },
+  ];
+  const accent = profile?.card?.accent || '#f472b6';
+  const cursorCss = buildCursorCssValue(activeCursor, accent);
 
   return (
     <div
       className={styles.heroVisual}
-      aria-label={profile ? `Preview of ${user.username}'s profile` : 'Illustrative user.pet profile preview'}
+      aria-label={profile ? `Preview of ${user.username}'s profile` : 'Live phone-frame profile preview'}
       data-testid="hero-profile-preview"
-      onMouseMove={handleTiltMove}
-      onMouseLeave={handleTiltLeave}
-      style={{ '--preview-accent': accent }}
+      style={{ '--preview-accent': accent, ...(cursorCss ? { cursor: cursorCss } : {}) }}
     >
-      <div className={styles.previewWindow}>
-        <div className={styles.previewBar}>
-          <span className={styles.previewDots} aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
-          <span className={styles.previewAddress}>user.pet/{profile ? user.username : 'dome'}</span>
-          <div className={styles.previewModeSwitch} role="group" aria-label="Preview mode">
-            <button
-              type="button"
-              onClick={() => setPreviewTab('profile')}
-              className={`${styles.previewModeBtn} ${previewTab === 'profile' ? styles.previewModeBtnActive : ''}`}
-            >
-              Profile
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewTab('entry')}
-              className={`${styles.previewModeBtn} ${previewTab === 'entry' ? styles.previewModeBtnActive : ''}`}
-            >
-              Start Screen
-            </button>
+      <div className={styles.phoneFrame}>
+        {/* Phone Status & Notch Bar */}
+        <div className={styles.phoneTopBar}>
+          <span className={styles.phoneNotch} aria-hidden="true" />
+          <div className={styles.phoneBarRow}>
+            <span className={styles.previewAddress}>user.pet/{previewHandle}</span>
+            <div className={styles.previewModeSwitch} role="group" aria-label="Preview mode">
+              <button
+                type="button"
+                onClick={() => setPreviewTab('profile')}
+                className={`${styles.previewModeBtn} ${previewTab === 'profile' ? styles.previewModeBtnActive : ''}`}
+              >
+                Bento Card
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewTab('entry')}
+                className={`${styles.previewModeBtn} ${previewTab === 'entry' ? styles.previewModeBtnActive : ''}`}
+              >
+                Start Gate
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Single consolidated ReactBits WebGL-depth background (no overlapping canvases) */}
         <div className={styles.previewScene} style={{ fontFamily: fontStyle(activeFont) }}>
           <BackgroundFx
             kind={profile?.effects?.background && profile.effects.background !== 'none' ? profile.effects.background : activeShader}
-            amount={68}
+            amount={72}
             color={accent}
             preview
           />
-          <BackgroundFx kind="stars" amount={45} color="#7dd3fc" preview />
 
           {previewTab === 'entry' ? (
             <div
@@ -220,7 +281,7 @@ export const HeroPreview = ({ user }) => {
             >
               <div className={styles.previewEntryPill}>
                 <Volume2 size={12} />
-                <span>Interactive Start Gate · 60fps ReactBits</span>
+                <span>Interactive Start Gate</span>
               </div>
               <div className={styles.previewEntryTitle}>
                 <FxText
@@ -230,142 +291,161 @@ export const HeroPreview = ({ user }) => {
                 />
               </div>
               <p className={styles.previewEntrySub}>
-                {profile?.entry?.subtitle || 'Tap anywhere to unlock synced LRC audio, shaders & custom cursors'}
+                {profile?.entry?.subtitle || 'Tap anywhere to unlock synced lyrics, shaders & custom cursors'}
               </p>
               <span className={styles.previewEntryAction}>
-                <Sparkles size={12} /> Enter page
+                <Sparkles size={12} /> Enter profile
               </span>
             </div>
           ) : (
             <div className={styles.userPreviewCard}>
-              <div className={styles.previewTopVolume}>
-                <Volume2 size={12} />
-                <span className={styles.previewVolumeTrack}>
-                  <i />
-                </span>
-              </div>
-
-              <div className={styles.previewBanner}>
-                {banner && (
-                  <img
-                    src={banner}
-                    alt=""
-                    decoding="async"
-                    fetchPriority="low"
-                    onError={(event) => {
-                      event.currentTarget.hidden = true;
-                    }}
-                  />
-                )}
-                <div className={styles.previewBadgeDock}>
-                  {(profile?.shownBadges?.length ? profile.shownBadges : ['founder', 'verified', 'staff', 'og'])
-                    .slice(0, 4)
-                    .map((b) => (
-                      <BadgeIcon key={b} id={b} size={11} />
-                    ))}
-                </div>
-              </div>
-
-              <div className={styles.previewBody}>
-                <div className={styles.previewAvatarWrap}>
-                  {profile?.media?.avatar?.src ? (
-                    <Avatar
-                      media={profile.media.avatar}
-                      name={user.username}
-                      size={68}
-                      decoration={profile.effects?.decoration}
-                      hue={profile.effects?.decoHue}
-                    />
-                  ) : (
-                    <div className={styles.previewAvatar}>D</div>
-                  )}
-                </div>
-
-                <div className={styles.previewName}>
-                  {profile?.displayName || 'dome'} <span className={styles.aquaSpark}>✦</span>
-                </div>
-                <div className={styles.userPreviewHandle}>@{user?.username || 'dome'} · UID #1</div>
-
-                <div className={styles.previewMetaList}>
-                  <div>
-                    <span>Joined</span>
-                    <strong>Day One</strong>
+              {/* Bento Tile 1: Identity Header */}
+              <div className={styles.bentoIdentityTile}>
+                <div className={styles.bentoIdentityRow}>
+                  <div className={styles.previewAvatarWrap}>
+                    {profile?.media?.avatar?.src ? (
+                      <Avatar
+                        media={profile.media.avatar}
+                        name={user.username}
+                        size={52}
+                        decoration={profile.effects?.decoration}
+                        hue={profile.effects?.decoHue}
+                      />
+                    ) : (
+                      <div className={styles.previewAvatar}>
+                        {String(previewHandle || 'U').slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <span>Shader</span>
-                    <strong>{SHADER_PRESETS.find(([id]) => id === activeShader)?.[1] || 'Aurora'}</strong>
+                  <div className={styles.bentoIdentityText}>
+                    <div className={styles.previewName}>
+                      {profile?.displayName || previewHandle} <span className={styles.pinkSpark}>✦</span>
+                    </div>
+                    <div className={styles.userPreviewHandle}>
+                      @{previewHandle} · <span className={styles.verifiedSubdomain}>{previewHandle}.user.pet</span>
+                    </div>
+                  </div>
+                  <div className={styles.previewBadgeDock}>
+                    {(profile?.shownBadges?.length ? profile.shownBadges : ['founder', 'verified', 'donor'])
+                      .slice(0, 3)
+                      .map((b) => (
+                        <BadgeIcon key={b} id={b} size={11} />
+                      ))}
                   </div>
                 </div>
+                <p className={styles.previewQuote}>
+                  “{profile?.bio || 'Your links, your music, and the little things you want to share.'}”
+                </p>
+              </div>
 
-                <div className={styles.previewQuote}>
-                  “{profile?.bio || 'Aqua 60fps shaders, custom fonts, synced LRC lyrics & custom cursors.'}”
-                </div>
+              {/* Bento Tile 2: Auto / Half / Full Modular Links Grid */}
+              <div className={styles.bentoLinksGrid}>
+                {links.map((link, index) => {
+                  const isFull = link.span === 'full' || (links.length % 2 === 1 && index === links.length - 1);
+                  return (
+                    <div
+                      className={`${styles.previewLink} ${isFull ? styles.previewLinkFull : styles.previewLinkHalf}`}
+                      key={link.id || link.url || index}
+                    >
+                      <Link2 size={13} />
+                      <span>{link.label || link.platform || 'Link'}</span>
+                      <ArrowUpRight size={13} />
+                    </div>
+                  );
+                })}
+              </div>
 
+              {/* Bento Tile 3: Audio + Native Synced Lyrics Inside the Grid */}
+              <div className={styles.bentoAudioLyricsTile}>
                 <div className={styles.previewAudioMini}>
                   <Music2 size={13} />
-                  <span>{profile?.audio?.title || 'After Dark — Aqua Synth Mix'}</span>
+                  <span>{profile?.audio?.title || 'Midnight Velvet — Synth Mix'}</span>
                   <span className={styles.previewEq}>
                     <i />
                     <i />
                     <i />
                   </span>
                 </div>
-
-                <div className={styles.userPreviewRows}>
-                  {(links.length
-                    ? links
-                    : [
-                        { id: '1', label: 'Discord Community & Live Presence' },
-                        { id: '2', label: 'Spotify & Time-Synced LRC Lyrics' },
-                      ]
-                  ).map((link) => (
-                    <div className={styles.previewLink} key={link.id || link.url}>
-                      <Link2 size={13} />
-                      <span>{link.label || link.platform || 'Link'}</span>
-                      <ArrowUpRight size={13} />
-                    </div>
-                  ))}
+                <div className={styles.bentoNativeLyrics}>
+                  <div className={styles.bentoLyricsHeader}>
+                    <Captions size={11} />
+                    <span>SYNCED LYRICS · BENTO GRID</span>
+                  </div>
+                  <p className={styles.bentoLyricActive}>“Drifting through rose and violet light”</p>
+                  <p className={styles.bentoLyricNext}>00:18 · Lyrics that keep time with your song</p>
                 </div>
+              </div>
 
-                <div className={styles.previewFooterBar}>
-                  <span>
-                    <Hash size={10} /> UID 1
-                  </span>
-                  <span>
-                    <Eye size={10} /> {(profile?.views || 14820).toLocaleString()}
-                  </span>
-                </div>
+              <div className={styles.previewFooterBar}>
+                <span>
+                  <Hash size={11} /> Bento Grid
+                </span>
+                <span>
+                  <Eye size={11} /> {(profile?.views || 4280).toLocaleString()} views
+                </span>
               </div>
             </div>
           )}
         </div>
 
-        <div className={styles.previewToolbar}>
+        {/* INTERACTIVE CHIPS GROUPED DIRECTLY UNDER THE PHONE PREVIEW */}
+        <div className={styles.previewToolbar} data-testid="hero-interactive-chips">
           <div className={styles.previewToolbarGroup}>
             <span className={styles.previewToolbarLabel}>Shader</span>
-            {SHADER_PRESETS.slice(0, 4).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setActiveShader(id)}
-                className={`${styles.previewChip} ${activeShader === id ? styles.previewChipActive : ''}`}
-              >
-                {label.split(' ')[0]}
-              </button>
-            ))}
+            <div className={styles.previewChipRow}>
+              {SHADER_PRESETS.slice(0, 4).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  data-testid={`hero-chip-shader-${id}`}
+                  onClick={() => setActiveShader?.(id)}
+                  className={`${styles.previewChip} ${activeShader === id ? styles.previewChipActive : ''}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
+
           <div className={styles.previewToolbarGroup}>
             <span className={styles.previewToolbarLabel}>Font</span>
-            {['geist', 'editorial', 'syne', 'pixel'].map((id) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setActiveFont(id)}
-                className={`${styles.previewChip} ${activeFont === id ? styles.previewChipActive : ''}`}
-              >
-                {id}
-              </button>
-            ))}
+            <div className={styles.previewChipRow}>
+              {['geist', 'editorial', 'syne', 'pixel'].map((id) => {
+                const label = FONT_OPTIONS.find(([fid]) => fid === id)?.[1]?.split(' ')[0] || id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    data-testid={`hero-chip-font-${id}`}
+                    onClick={() => setActiveFont?.(id)}
+                    className={`${styles.previewChip} ${activeFont === id ? styles.previewChipActive : ''}`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className={styles.previewToolbarGroup}>
+            <span className={styles.previewToolbarLabel}>Cursor</span>
+            <div className={styles.previewChipRow}>
+              {HERO_CURSORS.map(([cid, label]) => {
+                const icon = getCursorPreviewDataUrl(cid, '#f472b6');
+                return (
+                  <button
+                    key={cid}
+                    type="button"
+                    data-testid={`hero-chip-cursor-${cid}`}
+                    onClick={() => onSelectCursor?.(cid)}
+                    className={`${styles.previewChip} ${activeCursor === cid ? styles.previewChipActive : ''}`}
+                  >
+                    {icon && <img src={icon} alt="" className="h-3.5 w-3.5" />}
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -373,126 +453,77 @@ export const HeroPreview = ({ user }) => {
   );
 };
 
-const CONTROL_TABS = [
-  {
-    id: 'fonts',
-    num: '01',
-    title: 'Fonts & Typography',
-    sub: '16 curated creator & gamer fonts + custom .woff2/.ttf upload',
-    icon: Type,
-  },
-  {
-    id: 'shaders',
-    num: '02',
-    title: 'Start Gate & Shaders',
-    sub: 'Interactive Click-to-Enter screen + 60fps ReactBits WebGL shaders',
-    icon: Wand2,
-  },
-  {
-    id: 'cursors',
-    num: '03',
-    title: 'Site & Profile Cursors',
-    sub: '12 SVG pointers + 6 particle hover trails across the site & your page',
-    icon: MousePointerClick,
-  },
-  {
-    id: 'audio',
-    num: '04',
-    title: 'Synced Lyrics & Discord',
-    sub: 'Time-synced LRC karaoke lyrics + /.well-known/discord verification',
-    icon: Music2,
-  },
-];
-
-const FEATURE_WALL = [
-  '1-Char Usernames',
-  'Sequential UIDs',
-  '16 Built-in Fonts',
-  'Custom Font Upload (.woff2/.ttf)',
-  '22 Animated Text Effects',
-  'Interactive Start Screen',
-  'Password-Protected Gate',
-  '60fps ReactBits Shaders',
-  'Aurora & Hyperspeed WebGL',
-  'Iridescence & Silk Shaders',
-  '12 Custom SVG Cursors',
-  '6 Cursor Particle Trails',
-  'Time-Synced LRC Lyrics',
-  'Side-Stage Karaoke Lyrics',
-  'Vinyl & Glass Audio Players',
-  'Discord Presence Card',
-  'Subdomain Discord Verify',
-  'Avatar Frame Decorations',
-  'Holographic Profile Tilt',
-  'Real-Time View Analytics',
-];
-
-const RARITY_TIERS = [
-  { len: '1 character', sample: 'k', badge: 'MYTHIC TIER', sub: 'Only 36 handles possible worldwide' },
-  { len: '2 characters', sample: 'xo', badge: 'LEGENDARY TIER', sub: '1,327 ultra-short combinations' },
-  { len: '3 characters', sample: 'sky', badge: 'EARLY ADOPTER', sub: '50,497 clean 3-letter handles' },
-];
-
 export default function Home() {
-  const { user, db } = useStore();
+  const { user, isTaken } = useStore();
   const navigate = useNavigate();
-  const [topProfiles, setTopProfiles] = useState(null);
+  const reducedMotion = useReducedMotion();
+  const [topProfiles, setTopProfiles] = useState([]);
   const [copied, setCopied] = useState(false);
   const [claimInput, setClaimInput] = useState('');
-  const [controlTab, setControlTab] = useState('fonts');
-  const [demoFont, setDemoFont] = useState('editorial');
-  const [demoShader, setDemoShader] = useState('aurora');
-  const [demoCursor, setDemoCursor] = useState(
+  const [claimStatus, setClaimStatus] = useState({ state: 'idle', message: '' });
+  const [activeShader, setActiveShader] = useState('aurora');
+  const [activeFont, setActiveFont] = useState('geist');
+  const [activeCursor, setActiveCursor] = useState(
     () => (typeof window !== 'undefined' && localStorage.getItem('upet_site_cursor')) || 'neon-arrow'
   );
-  const [demoEntryFx, setDemoEntryFx] = useState('neon');
+  const [donateDemoAmount, setDonateDemoAmount] = useState(15);
 
-  const fallbackPool = Object.values(db?.users || {})
-    .filter((u) => !u.banned && u.profile)
-    .map((u) => ({
-      username: u.username,
-      displayName: u.profile.displayName || u.username,
-      alias: u.profile.alias || '',
-      bio: u.profile.bio || '',
-      views: u.profile.views || 0,
-      linkCount: (u.profile.links || []).length,
-      badges: u.profile.shownBadges || u.profile.badges || [],
-      avatar: u.profile.media?.avatar || { src: '' },
-      banner: u.profile.media?.banner || { src: '' },
-      background: u.profile.media?.background || { src: '' },
-      card: u.profile.card || { accent: '#6cc4ff', bgColor: '#07111f', layout: 'minimal' },
-    }));
+  // Live availability checking for the above-the-fold Claim box
+  useEffect(() => {
+    const raw = claimInput.trim().toLowerCase();
+    if (!raw) {
+      setClaimStatus({ state: 'idle', message: 'Pick a handle to see if it’s available.' });
+      return undefined;
+    }
+    let normalized = '';
+    try {
+      normalized = normalizeUsername(raw);
+    } catch {
+      setClaimStatus({
+        state: 'invalid',
+        message: 'Use 3–20 letters, numbers, dots, underscores, or hyphens.',
+      });
+      return undefined;
+    }
+
+    setClaimStatus({ state: 'checking', message: `Checking user.pet/${normalized}…` });
+    let alive = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const taken = await isTaken(normalized);
+        if (!alive) return;
+        if (taken) {
+          setClaimStatus({ state: 'taken', message: `user.pet/${normalized} is taken. Try another?` });
+        } else {
+          setClaimStatus({ state: 'available', message: `Good news—user.pet/${normalized} is available!` });
+        }
+      } catch {
+        if (alive) {
+          setClaimStatus({ state: 'error', message: 'We couldn’t check right now. Give it another try.' });
+        }
+      }
+    }, 240);
+
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+    };
+  }, [claimInput, isTaken]);
 
   useEffect(() => {
     let active = true;
-    let timer;
-    let pool = [];
-    const refresh = async () => {
-      try {
-        const response = await fetch('/api/top-profiles');
-        if (!response.ok) throw new Error('Top profiles unavailable');
-        const data = await response.json();
-        if (Array.isArray(data.profiles)) pool = data.profiles.slice(0, 100);
-      } catch {
-        /* Keep previous ranking when refresh fails */
-      }
-      if (!active) return;
-      if (pool.length) {
-        setTopProfiles((current) => {
-          let next = pickProfiles(pool);
-          const previous = new Set((current || []).map((profile) => profile.username));
-          if (pool.length > 3 && next.every((profile) => previous.has(profile.username))) {
-            next = pickProfiles(pool);
-          }
-          return next;
-        });
-      }
-      timer = window.setTimeout(refresh, rotationDelay());
-    };
-    refresh();
+    fetch('/api/top-profiles')
+      .then((res) => (res.ok ? res.json() : { profiles: [] }))
+      .then((data) => {
+        if (!active) return;
+        const real = Array.isArray(data?.profiles)
+          ? data.profiles.filter((p) => p && p.username)
+          : [];
+        setTopProfiles(real.slice(0, 6));
+      })
+      .catch(() => {});
     return () => {
       active = false;
-      clearTimeout(timer);
     };
   }, []);
 
@@ -511,497 +542,437 @@ export default function Home() {
     event.preventDefault();
     const cleaned = claimInput.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
     if (user) {
-      navigate('/dashboard/editor');
+      navigate('/dashboard/links');
       return;
     }
-    navigate(cleaned ? `/login?claim=${encodeURIComponent(cleaned)}` : '/login');
+    navigate(cleaned.length >= 3 ? `/login?claim=${encodeURIComponent(cleaned)}` : '/login');
   };
 
   const applySiteAndDemoCursor = (cursorId) => {
-    setDemoCursor(cursorId);
-    setGlobalSiteCursor(cursorId, '#6cc4ff');
+    setActiveCursor(cursorId);
+    setGlobalSiteCursor(cursorId, '#f472b6');
   };
 
-  const slots = topProfiles && topProfiles.length ? topProfiles : fallbackPool.slice(0, 3);
-  while (slots.length < 3) slots.push(null);
-
-  const previewHandle = claimInput.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '') || user?.username || 'k';
+  const cleanedInput = claimInput.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
+  const previewHandle = cleanedInput.length >= 3 ? cleanedInput : user?.username || 'velvet';
+  const showCommunitySection = topProfiles.length >= 3;
 
   return (
     <div className={styles.home}>
-      {/* SECTION 1: BIG AQUA USER.PET STAGE HERO */}
-      <section className={styles.heroStage}>
-        <div className={styles.heroTopRow}>
-          <div className={styles.heroBadgePill}>
-            <span className={styles.liveDot} />
-            <span>USER.PET // AQUA 60FPS ENGINE</span>
-          </div>
-
-          <div className={styles.quickCursorBar} aria-label="Try live website cursors">
-            <span className={styles.quickCursorLabel}>
-              <MousePointerClick size={12} /> Try Website Cursor:
-            </span>
-            {['neon-arrow', 'cyber-ring', 'cat', 'pixel-sword', 'star'].map((cid) => {
-              const label = CURSOR_PRESETS.find(([id]) => id === cid)?.[1] || cid;
-              const icon = getCursorPreviewDataUrl(cid, '#6cc4ff');
-              return (
-                <button
-                  key={cid}
-                  type="button"
-                  onClick={() => applySiteAndDemoCursor(cid)}
-                  className={`${styles.quickCursorChip} ${demoCursor === cid ? styles.quickCursorChipActive : ''}`}
-                >
-                  {icon && <img src={icon} alt="" className="h-3.5 w-3.5" />}
-                  <span>{label.split(' ')[0]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
+      {/* SECTION 1: ALIGNED 2-COLUMN HERO (HEADLINE + ABOVE-THE-FOLD CLAIM + STICKY PHONE PREVIEW) */}
+      <motion.section
+        className={styles.heroStage}
+        initial={reducedMotion ? false : { opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      >
         <div className={styles.heroCenterpiece}>
-          <div
-            className={styles.chromeEmblemColumn}
-            onMouseMove={handleTiltMove}
-            onMouseLeave={handleTiltLeave}
-          >
-            <div className={styles.chromeEmblemWrap} aria-hidden="true">
-              <div className={styles.chromeGlow} />
-              <div className={styles.chromeMonogram}>
-                <div className={styles.bigAquaIcon}>
-                  <span>U</span>
-                  <PawPrint className={styles.bigAquaPaw} fill="currentColor" />
-                </div>
-                <span className={styles.chromeWord}>
-                  user<span className={styles.chromeWordDot}>.pet</span>
-                </span>
-                <span className={styles.chromeSub}>SHADERS · START SCREENS · CUSTOM FONTS · CURSORS</span>
+          {/* Left Column: Hero Card strictly aligned to top & bottom Y-axis of Phone Preview */}
+          <div className={styles.heroCopyCard}>
+            <div className={styles.heroCopyTop}>
+              <div className={styles.heroBadgePill}>
+                <span className={styles.liveDot} />
+                <span>YOUR PAGE · YOUR MUSIC · YOUR PEOPLE</span>
               </div>
-            </div>
-            <div className={styles.chromeFeaturePills}>
-              <span>16 Fonts + Custom Upload</span>
-              <span>12 Aqua &amp; Custom Cursors</span>
-              <span>Interactive Start Gate</span>
-              <span>Discord Subdomain Verify</span>
-            </div>
-          </div>
 
-          <HeroPreview user={user} />
-        </div>
+              <h1 data-testid="hero-title" className={styles.heroHeadline}>
+                Your little corner of the internet,
+                <br />
+                <span className={styles.gradientHeadlineText}>made to feel like you.</span>
+              </h1>
 
-        {/* 3-COLUMN BOTTOM HERO BAR */}
-        <div className={styles.heroBottomBar}>
-          <div className={styles.heroColTitle}>
-            <h1 data-testid="hero-title">
-              Your digital home,
-              <br />
-              <span className={styles.aquaHeadlineText}>alive in 60fps.</span>
-            </h1>
-          </div>
+              <p className={styles.heroDescription}>
+                Put your favorite things in one place: your links, your music, your style, and the details you want people to remember.
+              </p>
 
-          <div className={styles.heroColDesc}>
-            <p className={styles.heroDescription}>
-              Build a profile that feels like an interactive world. Claim a rare 1-character handle, pair 60fps ReactBits shaders with time-synced LRC music, and customize every font and cursor.
-            </p>
-            <div className={styles.heroActions}>
-              {user ? (
-                <>
-                  <Link to="/dashboard" data-testid="hero-cta" className={styles.aquaPillBtn}>
-                    <span>Open dashboard</span>
-                    <span className={styles.aquaPillCircle}>
+              {/* THE "CLAIM" BOX — ABOVE THE FOLD, DIRECTLY UNDER THE HEADLINE */}
+              <div className={styles.claimBoxWrap} data-testid="hero-claim-box">
+                <form onSubmit={handleClaimSubmit} className={styles.claimBar}>
+                  <span className={styles.claimPrefix}>user.pet/</span>
+                  <input
+                    type="text"
+                    data-testid="hero-claim-input"
+                    value={claimInput}
+                    onChange={(e) => setClaimInput(e.target.value)}
+                    placeholder={user?.username || 'yourname'}
+                    maxLength={20}
+                    aria-label="Claim your user.pet handle"
+                    className={styles.claimInput}
+                  />
+                  {claimStatus.state === 'available' && (
+                    <span
+                      data-testid="claim-available-badge"
+                      className={styles.claimStatusIconAvailable}
+                      title={claimStatus.message}
+                    >
+                      <CheckCircle2 size={16} />
+                    </span>
+                  )}
+                  {claimStatus.state === 'checking' && (
+                    <span className={styles.claimStatusIconChecking}>
+                      <Loader2 size={15} className="animate-spin" />
+                    </span>
+                  )}
+                  {claimStatus.state === 'taken' && (
+                    <span className={styles.claimStatusIconTaken} title={claimStatus.message}>
+                      <XCircle size={16} />
+                    </span>
+                  )}
+                  <button
+                    type="submit"
+                    data-testid="hero-claim-submit"
+                    disabled={claimStatus.state === 'taken'}
+                    className={styles.claimSubmit}
+                  >
+                    <span>Claim</span>
+                    <span className={styles.claimSubmitCircle}>
                       <ArrowRight size={13} />
                     </span>
-                  </Link>
-                  <Link to={`/${user.username}`} data-testid="hero-explore" className={styles.darkPillBtn}>
-                    <span>View your page</span>
-                    <ArrowUpRight size={14} />
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <a
-                    href="https://discord.gg/upet"
-                    target="_blank"
-                    rel="noreferrer"
-                    className={styles.darkPillBtn}
-                  >
-                    <span>Join our Discord</span>
-                    <ArrowUpRight size={14} />
-                  </a>
-                  <Link to="/explore" data-testid="hero-cta" className={styles.darkPillBtn}>
-                    <span>Explore community</span>
-                    <ArrowRight size={14} />
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.heroColClaim}>
-            <form onSubmit={handleClaimSubmit} className={styles.claimBar}>
-              <span className={styles.claimPrefix}>user.pet/</span>
-              <input
-                type="text"
-                value={claimInput}
-                onChange={(e) => setClaimInput(e.target.value)}
-                placeholder={user?.username || 'yourname'}
-                aria-label="Claim your user.pet handle"
-                className={styles.claimInput}
-              />
-              <button type="submit" className={styles.claimSubmit}>
-                <span>{user ? 'Customize' : 'Claim page'}</span>
-                <span className={styles.claimSubmitCircle}>
-                  <ArrowRight size={13} />
-                </span>
-              </button>
-            </form>
-            <div className={styles.claimFootnote}>
-              <span className={styles.claimDot} />
-              <span>1-CHAR HANDLES OPEN · </span>
-              <Link to="/donate" className={styles.claimDonateLink}>
-                SUPPORTER PERKS AVAILABLE →
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 2: RARE HANDLES & HOLOGRAPHIC AQUA PASSPORT */}
-      <section className={styles.trophiesSection} aria-labelledby="trophies-title">
-        <div className={styles.trophiesLeft}>
-          <p className={styles.sectionKicker}>Handles, UIDs &amp; Badges</p>
-          <h2 id="trophies-title" className={styles.sectionTitle}>
-            Rare handles &amp;
-            <br />
-            Day-One Passports.
-          </h2>
-          <p className={styles.sectionLead}>
-            Claim a 1, 2, or 3-character handle and lock in your permanent sequential UID. Click any tier below to preview it live on the Aqua Holographic Passport.
-          </p>
-
-          <div className={styles.scarcityTable}>
-            {RARITY_TIERS.map((tier) => (
-              <button
-                key={tier.len}
-                type="button"
-                onClick={() => setClaimInput(tier.sample)}
-                className={`${styles.scarcityRow} ${previewHandle === tier.sample ? styles.scarcityRowActive : ''}`}
-              >
-                <div>
-                  <span className={styles.scarcityLabel}>{tier.len}</span>
-                  <span className={styles.scarcitySub}>{tier.sub}</span>
-                </div>
-                <span className={styles.scarcityBadge}>
-                  {tier.badge} · /{tier.sample}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.idCardWrap}>
-          <div
-            className={styles.idCard}
-            onMouseMove={handleTiltMove}
-            onMouseLeave={handleTiltLeave}
-          >
-            <PawPrint className={styles.idCardWatermark} />
-            <div className={styles.idCardHeader}>
-              <span className={styles.idCardBrand}>
-                <PawPrint size={13} /> USER.PET PASSPORT
-              </span>
-              <span className={styles.idCardUidBadge}>UID #0001</span>
-            </div>
-
-            <div className={styles.idCardUrl}>
-              <span className={styles.idCardUrlMuted}>user.pet/</span>
-              <span className={styles.idCardUrlStrong}>{previewHandle}</span>
-            </div>
-
-            <div className={styles.idCardCaption}>
-              {previewHandle.length === 1
-                ? 'Mythic 1-character handle · 1 of 36 worldwide'
-                : `${previewHandle.length}-character handle · Permanent sequential UID`}
-            </div>
-
-            <div className={styles.idCardBadges}>
-              <span>FOUNDER</span>
-              <span>EARLY SUPPORTER</span>
-              <span>DISCORD VERIFIED</span>
-              <span>OG</span>
-            </div>
-
-            <div className={styles.idCardFooter}>
-              <div>
-                <div className={styles.idCardMetaLabel}>EDITION</div>
-                <div className={styles.idCardMetaValue}>AQUA GENESIS · DAY ONE</div>
-              </div>
-              <div className={styles.idCardBarcode} aria-hidden="true">
-                <i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 3: INTERACTIVE CREATIVE STUDIO */}
-      <section className={styles.controlRoomSection} aria-labelledby="features-title">
-        <div className={styles.controlRoomGrid}>
-          <div className={styles.controlRoomLeft}>
-            <p className={styles.sectionKicker}>Interactive Studio</p>
-            <h2 id="features-title" className={styles.sectionTitle}>
-              Built like a
-              <br />
-              creative engine.
-            </h2>
-            <p className={styles.sectionLead}>
-              Test-drive our live customization engine right here. Switch between 16 curated fonts, trigger 60fps ReactBits shaders, change the website&apos;s cursor, or preview time-synced LRC lyrics.
-            </p>
-
-            <div className={styles.controlTabsList}>
-              {CONTROL_TABS.map((tab, idx) => {
-                const Icon = tab.icon;
-                const active = controlTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    data-testid={`feature-${idx}`}
-                    onClick={() => setControlTab(tab.id)}
-                    className={`${styles.controlTabBtn} ${active ? styles.controlTabBtnActive : ''}`}
-                  >
-                    <span className={styles.controlTabNum}>{tab.num}</span>
-                    <span className={styles.controlTabCopy}>
-                      <strong>{tab.title}</strong>
-                      <small>{tab.sub}</small>
-                    </span>
-                    <Icon size={16} className={styles.controlTabIcon} />
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                </form>
 
-          <div
-            className={styles.controlRoomStage}
-            style={{ cursor: buildCursorCssValue(demoCursor, '#6cc4ff') || 'auto' }}
-          >
-            <div className={styles.controlStageTopbar}>
-              <div className={styles.controlStageTitle}>
-                <strong>Live Studio Sandbox</strong>
-                <span>Click any option below to preview it in real time</span>
-              </div>
-              <Link to={user ? '/dashboard/editor' : '/login'} className={styles.aquaPillSmall}>
-                Open Full Editor <ArrowRight size={12} />
-              </Link>
-            </div>
-
-            <div className={styles.controlStagePills}>
-              {CONTROL_TABS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setControlTab(t.id)}
-                  className={`${styles.stagePill} ${controlTab === t.id ? styles.stagePillActive : ''}`}
+                <div
+                  className={`${styles.claimAvailabilityRow} ${
+                    claimStatus.state === 'available'
+                      ? styles.claimAvailabilitySuccess
+                      : claimStatus.state === 'taken' || claimStatus.state === 'invalid' || claimStatus.state === 'error'
+                      ? styles.claimAvailabilityWarn
+                      : ''
+                  }`}
+                  role="status"
+                  aria-live="polite"
                 >
-                  {t.title}
-                </button>
-              ))}
-            </div>
-
-            <div className={styles.controlStageBody}>
-              <div className={styles.controlStageControls}>
-                {controlTab === 'fonts' && (
-                  <div className={styles.stagePanel}>
-                    <div className={styles.stagePanelLabel}>CHOOSE FROM 16 CURATED FONTS + CUSTOM UPLOAD</div>
-                    <div className={styles.fontDemoGrid}>
-                      {FONT_OPTIONS.filter(([id]) => id !== 'custom')
-                        .slice(0, 9)
-                        .map(([id, label, css, tag]) => (
-                          <button
-                            key={id}
-                            type="button"
-                            onClick={() => setDemoFont(id)}
-                            className={`${styles.fontDemoCard} ${demoFont === id ? styles.fontDemoCardActive : ''}`}
-                            style={{ fontFamily: css }}
-                          >
-                            <span className={styles.fontDemoAa}>Aa</span>
-                            <span className={styles.fontDemoName}>{label}</span>
-                            <span className={styles.fontDemoTag}>{tag}</span>
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {controlTab === 'shaders' && (
-                  <div className={styles.stagePanel}>
-                    <div className={styles.stagePanelLabel}>60FPS REACTBITS SHADERS &amp; START GATE</div>
-                    <div className={styles.shaderDemoGrid}>
-                      {SHADER_PRESETS.map(([id, label]) => (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => setDemoShader(id)}
-                          className={`${styles.shaderDemoBtn} ${demoShader === id ? styles.shaderDemoBtnActive : ''}`}
-                        >
-                          <span>{label}</span>
-                          <Sparkles size={13} />
-                        </button>
-                      ))}
-                    </div>
-                    <div className={styles.stagePanelLabel} style={{ marginTop: '14px' }}>
-                      START SCREEN TITLE EFFECT
-                    </div>
-                    <div className={styles.shaderDemoGrid}>
-                      {['neon', 'glitch', 'rainbow', 'typewriter', 'fire', 'chroma'].map((fx) => (
-                        <button
-                          key={fx}
-                          type="button"
-                          onClick={() => setDemoEntryFx(fx)}
-                          className={`${styles.shaderDemoBtn} ${demoEntryFx === fx ? styles.shaderDemoBtnActive : ''}`}
-                        >
-                          <span className="capitalize">{fx}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {controlTab === 'cursors' && (
-                  <div className={styles.stagePanel}>
-                    <div className={styles.stagePanelLabel}>CLICK ANY CURSOR TO APPLY IT TO THE ENTIRE WEBSITE</div>
-                    <div className={styles.cursorDemoGrid}>
-                      {CURSOR_PRESETS.slice(0, 9).map(([id, label, desc]) => {
-                        const previewUrl = getCursorPreviewDataUrl(id, '#6cc4ff');
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            onClick={() => applySiteAndDemoCursor(id)}
-                            style={{ cursor: buildCursorCssValue(id, '#6cc4ff') || 'pointer' }}
-                            className={`${styles.cursorDemoCard} ${demoCursor === id ? styles.cursorDemoCardActive : ''}`}
-                          >
-                            <div className={styles.cursorDemoIcon}>
-                              {previewUrl ? (
-                                <img src={previewUrl} alt={label} className="h-5 w-5" />
-                              ) : (
-                                <MousePointerClick size={15} />
-                              )}
-                            </div>
-                            <div className={styles.cursorDemoMeta}>
-                              <strong>{label}</strong>
-                              <span>{desc}</span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {controlTab === 'audio' && (
-                  <div className={styles.stagePanel}>
-                    <div className={styles.stagePanelLabel}>SYNCED LRC LYRICS &amp; DISCORD SUBDOMAIN VERIFY</div>
-                    <div className={styles.audioDemoBox}>
-                      <div className={styles.audioDemoTrack}>
-                        <Music2 size={16} className="text-sky-400" />
-                        <div>
-                  <strong>Resonance — Aqua Synthwave Mix</strong>
-                          <span>Time-synced LRC karaoke + Vinyl/Glass player</span>
-                        </div>
-                      </div>
-                      <div className={styles.lyricDemoLines}>
-                        <span>00:12 · Drifting through the midnight tide</span>
-                        <strong className={styles.lyricDemoActive}>00:16 · Your digital home, alive in 60fps ✦</strong>
-                        <span>00:21 · Aqua shaders glowing behind one link</span>
-                      </div>
-                      <div className={styles.discordVerifyBox}>
-                        <ShieldCheck size={15} />
-                        <span>
-                          Verify <strong>{previewHandle}.user.pet</strong> on Discord via <code>/.well-known/discord</code>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.controlStagePreview} style={{ fontFamily: fontStyle(demoFont) }}>
-                <BackgroundFx kind={demoShader} amount={65} color="#6cc4ff" preview />
-                <div className={styles.miniCard}>
-                  <span className={styles.miniCardTag}>LIVE AQUA PREVIEW</span>
-                  <div className={styles.miniCardAvatar}>U</div>
-                  <div className={styles.miniCardName}>
-                    <FxText fx={demoEntryFx} text={`@${previewHandle}`} style={{ color: '#ffffff', '--fx-color': '#6cc4ff' }} />
-                  </div>
-                  <p className={styles.miniCardBio}>
-                    Font: <strong>{demoFont}</strong> · Shader: <strong>{demoShader}</strong> · Cursor: <strong>{demoCursor}</strong>
-                  </p>
-                  <div className={styles.miniCardPill}>click to enter · user.pet/{previewHandle}</div>
+                  {claimStatus.state === 'available' && <Check size={13} />}
+                  <span>{claimStatus.message}</span>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* SECTION 4: COMMUNITY SHOWCASE + FEATURE WALL */}
-      <section className={styles.showcase} aria-labelledby="discovery-title">
+            {/* Bottom of Left Hero Card: Quick Hooks & Secondary CTA */}
+            <div className={styles.heroCopyBottom}>
+              <div className={styles.heroMiniHooks}>
+                <div className={styles.heroMiniHookItem}>
+                  <strong>Style</strong>
+                  <span>Colors, fonts &amp; effects</span>
+                </div>
+                <div className={styles.heroMiniHookItem}>
+                  <strong>Music</strong>
+                  <span>Share a song you love</span>
+                </div>
+                <div className={styles.heroMiniHookItem}>
+                  <strong>Your people</strong>
+                  <span>Connect your Discord</span>
+                </div>
+              </div>
+
+              <div className={styles.heroActions}>
+                {user ? (
+                  <>
+                    <Link to="/dashboard/links" data-testid="hero-cta" className={styles.primaryGradientBtn}>
+                      <span>Open dashboard</span>
+                      <span className={styles.primaryBtnCircle}>
+                        <ArrowRight size={13} />
+                      </span>
+                    </Link>
+                    <Link to={`/${user.username}`} data-testid="hero-explore" className={styles.darkPillBtn}>
+                      <span>View your page</span>
+                      <ArrowUpRight size={14} />
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/explore" data-testid="hero-cta" className={styles.darkPillBtn}>
+                      <span>Explore profiles</span>
+                      <ArrowRight size={14} />
+                    </Link>
+                    <a
+                      href="https://discord.gg/upet"
+                      target="_blank"
+                      rel="noreferrer"
+                      className={styles.darkPillBtn}
+                    >
+                      <span>Join Discord</span>
+                      <ArrowUpRight size={14} />
+                    </a>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Sticky Interactive Phone-Frame Preview + Chips */}
+          <HeroPreview
+            user={user}
+            previewHandle={previewHandle}
+            activeShader={activeShader}
+            setActiveShader={setActiveShader}
+            activeFont={activeFont}
+            setActiveFont={setActiveFont}
+            activeCursor={activeCursor}
+            onSelectCursor={applySiteAndDemoCursor}
+          />
+        </div>
+      </motion.section>
+
+      {/* SECTION 2: SIMPLIFIED BENEFITS — THREE CLEAN HOOKS (LOOK, SOUND, PRESENCE) */}
+      <motion.section className={styles.benefitsSection} aria-labelledby="features-title" {...revealProps(reducedMotion)}>
         <div className={styles.sectionHeader}>
           <div>
-            <p className={styles.sectionKicker}>Community Directory</p>
-            <h2 id="discovery-title" className={styles.sectionTitle}>
-              Crafted on user.pet.
+            <p className={styles.sectionKicker}>Your page, your way</p>
+            <h2 id="features-title" className={styles.sectionTitle}>
+              A page that feels like yours.
             </h2>
             <p className={styles.sectionLead}>
-              Explore live pages built by creators combining custom typography, interactive start gates, 60fps shaders, and synced music.
+              Pick the pieces you like and make a space that feels right to you.
             </p>
           </div>
-          <Link to="/explore" className={styles.darkPillBtn}>
-            <span>Browse all profiles</span>
-            <ArrowUpRight size={15} />
+        </div>
+
+        <div className={styles.benefitsGrid}>
+          {BENEFIT_HOOKS.map((hook, idx) => {
+            const Icon = hook.icon;
+            return (
+              <motion.div key={hook.id} {...revealProps(reducedMotion, idx * 0.08)}>
+                <article
+                  data-testid={`feature-${idx}`}
+                  className={styles.benefitCard}
+                  onMouseMove={handleTiltMove}
+                  onMouseLeave={handleTiltLeave}
+                >
+                  <div className={styles.benefitCardTop}>
+                    <span className={styles.benefitKicker}>{hook.kicker}</span>
+                    <span className={styles.benefitIconBox}>
+                      <Icon size={18} />
+                    </span>
+                  </div>
+                  <h3 className={styles.benefitTitle}>{hook.title}</h3>
+                  <p className={styles.benefitHookLine}>{hook.desc}</p>
+                  <p className={styles.benefitDetail}>{hook.detail}</p>
+                </article>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.section>
+
+      {/* SECTION 3: "GET PAID" — MOCK user.pet/name/donate SHOWCASE */}
+      <motion.section
+        className={styles.getPaidSection}
+        aria-labelledby={showCommunitySection ? 'get-paid-title' : 'discovery-title'}
+        data-testid="get-paid-section"
+        {...revealProps(reducedMotion)}
+      >
+        <div className={styles.getPaidGrid}>
+          <div className={styles.getPaidCopy}>
+            <p className={styles.sectionKicker}>A little support goes a long way</p>
+            <h2
+              id={showCommunitySection ? 'get-paid-title' : 'discovery-title'}
+              className={styles.sectionTitle}
+            >
+              Let people support you at
+              <br />
+              <span className={styles.gradientHeadlineText}>user.pet/{previewHandle}/donate</span>
+            </h2>
+            <p className={styles.sectionLead}>
+              Give your supporters a simple way to say thanks, right from your profile. No extra storefront to set up—just your own tipping link.
+            </p>
+
+            <div className={styles.getPaidPills}>
+              <span>
+                <Check size={14} /> Your own <code>/{previewHandle}/donate</code> page
+              </span>
+              <span>
+                <Check size={14} /> A few ways for people to chip in
+              </span>
+              <span>
+                <Check size={14} /> A Donor Heart badge for supporters
+              </span>
+            </div>
+
+            <div className={styles.getPaidActions}>
+              <Link to="/donate" className={styles.primaryGradientBtn}>
+                <span>Preview Donate Page</span>
+                <span className={styles.primaryBtnCircle}>
+                  <ArrowRight size={13} />
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Mock user.pet/name/donate Card */}
+          <div className={styles.donateMockCard} data-testid="mock-donate-card">
+            <div className={styles.donateMockTopbar}>
+              <span className={styles.previewDots} aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
+              <span className={styles.donateMockUrl}>user.pet/{previewHandle}/donate</span>
+              <span className={styles.donateLowFeeBadge}>0% Monthly Fee</span>
+            </div>
+
+            <div className={styles.donateMockBody}>
+              <div className={styles.donateMockHeader}>
+                <div className={styles.donateMockAvatar}>
+                  {String(previewHandle || 'U').slice(0, 1).toUpperCase()}
+                </div>
+                <div>
+                  <div className={styles.donateMockTitle}>Support @{previewHandle}</div>
+                  <div className={styles.donateMockSub}>Direct creator tip · unlocks Donor badge</div>
+                </div>
+              </div>
+
+              <div className={styles.donateTierRow} role="group" aria-label="Sample tip amounts">
+                {[5, 15, 35].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setDonateDemoAmount(amt)}
+                    className={`${styles.donateTierPill} ${
+                      donateDemoAmount === amt ? styles.donateTierPillActive : ''
+                    }`}
+                  >
+                    <span>${amt}</span>
+                    <small>{amt === 5 ? 'Coffee' : amt === 15 ? 'Supporter' : 'Patron'}</small>
+                  </button>
+                ))}
+              </div>
+
+              <div className={styles.donateMockNote}>
+                “Keep creating! Here’s ${donateDemoAmount} for your next project.”
+              </div>
+
+              <Link to="/donate" className={styles.donateMockSubmit}>
+                <Heart size={15} className="fill-current" />
+                <span>Send ${donateDemoAmount} to @{previewHandle}</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* SECTION 3.5: FOUNDERS & CORE TEAM SHOWCASE */}
+      <motion.section
+        className={styles.founderSection}
+        aria-labelledby="founders-title"
+        data-testid="founder-showcase-section"
+        {...revealProps(reducedMotion)}
+      >
+        <div className={styles.sectionHeader}>
+          <div>
+            <p className={styles.sectionKicker}>The people behind user.pet</p>
+            <h2 id="founders-title" className={styles.sectionTitle}>
+              Meet the{' '}
+              <span className={styles.gradientHeadlineText}>founders.</span>
+            </h2>
+            <p className={styles.sectionLead}>
+              Three people with different roles, all helping make user.pet what it is.
+            </p>
+          </div>
+          <Link to="/donate" className={styles.darkPillBtn}>
+            <Crown size={14} className="text-amber-400" />
+            <span>Support the team</span>
           </Link>
         </div>
 
-        <div className={styles.profileGrid}>
-          {slots.map((entry, index) => (
-            <div key={entry?.username || `empty-${index}`}>
-              {entry ? <TopProfile entry={entry} slot={index + 1} /> : <ProfilePlaceholder />}
-            </div>
+        <div className={styles.founderGrid}>
+          {FOUNDER_TEAM_SHOWCASE.map((member, idx) => (
+            <motion.div key={member.username} {...revealProps(reducedMotion, idx * 0.08)}>
+              <Link
+              to={`/${member.username}`}
+              data-testid={`founder-card-${member.username}`}
+              className={styles.founderCard}
+              onMouseMove={handleTiltMove}
+              onMouseLeave={handleTiltLeave}
+              style={{ '--founder-accent': member.accent }}
+            >
+              <div className={styles.founderCardTop}>
+                <span className={styles.founderRolePill}>
+                  <Crown size={12} />
+                  <span>{member.roleTag}</span>
+                </span>
+                <span className={styles.founderUidTag}>TEAM</span>
+              </div>
+
+              <div className={styles.founderIdentityRow}>
+                <div className={styles.founderAvatarOrb}>
+                  {member.displayName.slice(0, 1)}
+                </div>
+                <div className={styles.founderIdentityMeta}>
+                  <div className={styles.founderNameRow}>
+                    <h3>{member.displayName}</h3>
+                    <div className={styles.founderBadges}>
+                      {member.badges.map((b) => (
+                        <BadgeIcon key={b} id={b} size={12} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className={styles.founderHandleLine}>
+                    @{member.username} · <span>{member.subdomain}</span>
+                  </p>
+                </div>
+              </div>
+
+              <p className={styles.founderBio}>{member.bio}</p>
+
+              <div className={styles.founderCardFooter}>
+                <span className={styles.founderVerifiedChip}>
+                  <CheckCircle2 size={12} /> Founder
+                </span>
+                <span className={styles.founderViewProfile}>
+                  Meet {member.displayName} <ArrowUpRight size={13} />
+                </span>
+              </div>
+              </Link>
+            </motion.div>
           ))}
         </div>
+      </motion.section>
 
-        <div className={styles.featureWallWrap}>
-          <div className={styles.featureWallHeader}>
-            <span className={styles.sectionKicker}>Everything unlocked</span>
-            <h3>Every tool you need to make your corner of the internet unforgettable.</h3>
+      {/* SECTION 4: COMMUNITY SHOWCASE (HIDDEN UNTIL 3 REAL FEATURED PROFILES EXIST) */}
+      {showCommunitySection && (
+        <motion.section className={styles.showcase} aria-labelledby="discovery-title" data-testid="community-section" {...revealProps(reducedMotion)}>
+          <div className={styles.sectionHeader}>
+            <div>
+              <p className={styles.sectionKicker}>Community Directory</p>
+              <h2 id="discovery-title" className={styles.sectionTitle}>
+                Made by the community.
+              </h2>
+              <p className={styles.sectionLead}>
+                Take a look at the pages people have made, and find a little inspiration for your own.
+              </p>
+            </div>
+            <Link to="/explore" className={styles.darkPillBtn}>
+              <span>Browse all profiles</span>
+              <ArrowUpRight size={15} />
+            </Link>
           </div>
-          <div className={styles.featureWallPills}>
-            {FEATURE_WALL.map((item) => (
-              <span key={item} className={styles.featureWallPill}>
-                <Check size={12} /> {item}
-              </span>
+
+          <div className={styles.profileGrid}>
+            {topProfiles.slice(0, 3).map((entry, index) => (
+              <div key={entry.username}>
+                <TopProfile entry={entry} slot={index + 1} />
+              </div>
             ))}
           </div>
-        </div>
-      </section>
+        </motion.section>
+      )}
 
       {/* SECTION 5: FINAL CTA */}
-      <section className={styles.finalSection} data-testid="the-end-section">
-        <p className={styles.sectionKicker}>Ready when you are</p>
-              <h2>{user ? 'Your Aqua studio is ready.' : 'Claim your user.pet handle today.'}</h2>
+      <motion.section className={styles.finalSection} data-testid="the-end-section" {...revealProps(reducedMotion)}>
+        <p className={styles.sectionKicker}>Whenever you’re ready</p>
+        <h2>{user ? 'Your next edit is waiting.' : 'Make a page that feels like you.'}</h2>
         <p>
           {user
-            ? 'Open the Profile Editor to customize your fonts, start screen, 60fps ReactBits shaders, custom cursor, and synced audio.'
-            : 'Pick your handle, customize your start gate, fonts, 60fps shaders, and custom cursor in under a minute.'}
+            ? 'Add a link, change the look, or put a new song on your page.'
+            : 'Choose a handle, add the things you love, and make the page your own.'}
         </p>
         <div className={styles.finalActions}>
           {user ? (
             <>
-              <Link to="/dashboard" data-testid="end-cta" className={styles.aquaPillBtn}>
+              <Link to="/dashboard/links" data-testid="end-cta" className={styles.primaryGradientBtn}>
                 <span>Open dashboard</span>
-                <span className={styles.aquaPillCircle}>
+                <span className={styles.primaryBtnCircle}>
                   <ArrowRight size={13} />
                 </span>
               </Link>
@@ -1019,9 +990,9 @@ export default function Home() {
             </>
           ) : (
             <>
-              <Link to="/explore" data-testid="end-cta" className={styles.aquaPillBtn}>
+              <Link to="/explore" data-testid="end-cta" className={styles.primaryGradientBtn}>
                 <span>Explore pages</span>
-                <span className={styles.aquaPillCircle}>
+                <span className={styles.primaryBtnCircle}>
                   <ArrowRight size={13} />
                 </span>
               </Link>
@@ -1032,7 +1003,7 @@ export default function Home() {
             </>
           )}
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Check,
   Image as ImageIcon,
@@ -23,19 +23,22 @@ import LyricsTab from "./editor/LyricsTab";
 import { MediaTab } from "./editor/MediaTab";
 
 const TABS = [
-  ["media", "Media", ImageIcon],
-  ["fonts", "Fonts & Text", Type],
-  ["entry", "Entry", Sparkles],
-  ["effects", "Effects / VFX", Palette],
-  ["card", "Card", Layers],
   ["links", "Links", Link2],
+  ["card", "Card", Layers],
+  ["fonts", "Fonts & Text", Type],
+  ["effects", "Background & VFX", Palette],
+  ["media", "Media", ImageIcon],
   ["audio", "Audio", Music],
   ["lyrics", "Lyrics", Sparkles],
+  ["entry", "Entry", Sparkles],
 ];
 
-export default function Editor() {
+export default function Editor({ initialTab = "links" }) {
   const { user, updateProfile, saveState } = useStore();
-  const [tab, setTab] = useState("media");
+  const [tab, setTab] = useState(initialTab);
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
   const p = user.profile;
 
   const up = (mut) => {
@@ -57,7 +60,7 @@ export default function Editor() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <PageTitle
           title="Profile Editor"
-          sub="Every change saves and previews live. Customize your fonts, start screen, 60fps shaders, custom cursors, card layout, links, and synced lyrics."
+          sub="Every change saves and previews live. Customize your links, Bento grid, fonts, start screen, shaders, cursors, and synced lyrics."
         />
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -97,8 +100,8 @@ export default function Editor() {
         </select>
       </label>
 
-      {/* Aqua Pill Tab Bar */}
-      <div className="mb-6 hidden flex-wrap gap-1.5 rounded-2xl border border-sky-400/15 bg-[#070b14] p-1.5 md:inline-flex">
+      {/* Pink-to-Aqua Pill Tab Bar */}
+      <div className="mb-6 hidden flex-wrap gap-1.5 rounded-2xl border border-pink-400/20 bg-[#100b22] p-1.5 md:inline-flex">
         {TABS.map(([id, label, Icon]) => {
           const active = tab === id;
           return (
@@ -109,8 +112,8 @@ export default function Editor() {
               onClick={() => setTab(id)}
               className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all duration-200 ${
                 active
-                  ? "bg-gradient-to-r from-sky-300 via-sky-400 to-cyan-400 text-slate-950 shadow-[0_6px_20px_-4px_rgba(56,189,248,0.55)]"
-                  : "text-zinc-400 hover:-translate-y-0.5 hover:bg-sky-400/10 hover:text-sky-200"
+                  ? "bg-gradient-to-r from-pink-400 via-violet-400 to-sky-400 text-slate-950 shadow-[0_6px_20px_-4px_rgba(244,114,182,0.55)]"
+                  : "text-zinc-400 hover:-translate-y-0.5 hover:bg-pink-400/10 hover:text-pink-200"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />

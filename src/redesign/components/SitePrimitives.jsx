@@ -6,7 +6,7 @@ import styles from './SitePrimitives.module.css';
 export function SiteNavShell({ children, className = '', ...props }) {
   return (
     <nav
-      className={`flex w-full max-w-6xl items-center justify-between rounded-full border border-sky-400/15 bg-[#070b14]/85 py-2 pl-4 pr-2.5 shadow-[0_20px_50px_-15px_rgba(2,8,23,0.9),0_0_30px_-18px_rgba(56,189,248,0.35)] backdrop-blur-xl transition-colors duration-300 hover:border-sky-400/30 ${className}`}
+      className={`flex w-full max-w-6xl items-center justify-between rounded-full border border-pink-400/25 bg-[#0e0a1c]/95 py-2.5 pl-4 pr-3 shadow-[0_24px_60px_-12px_rgba(6,4,16,0.96),0_0_34px_-16px_rgba(244,114,182,0.32)] backdrop-blur-2xl transition-colors duration-300 hover:border-pink-400/40 ${className}`}
       {...props}
     >
       {children}

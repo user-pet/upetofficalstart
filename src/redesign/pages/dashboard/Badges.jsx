@@ -42,7 +42,7 @@ export default function Badges() {
     ...p.badges.filter((id) => id !== "owner" && !(p.badgeOrder || []).includes(id)),
   ].filter((id, index, rows) => rows.indexOf(id) === index);
   const ownedBadges = ownedIds.map((id) => BADGES.find((badge) => badge.id === id)).filter(Boolean);
-  const lockedBadges = BADGES.filter((badge) => !ownedIds.includes(badge.id));
+  const lockedBadges = BADGES.filter((badge) => !ownedIds.includes(badge.id) && (badge.id !== "founder" || user.role === "founder"));
 
   const saveOrder = (badgeOrder) => {
     const hidden = new Set(p.hiddenBadges || []);
